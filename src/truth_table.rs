@@ -48,13 +48,13 @@ pub fn print_truth_table(formula: &str) {
 
     // Values
     for state in 0..1 << letters.count_ones() {
-        let current = "0";
+        let current = "0"; // TODO
         println!(
             "| {} | {} |",
             (0..=26u8)
+                .rev()
                 .filter_map(
                     |i| (letters & (1 << i) != 0).then(|| if state & (1 << i) != 0 {
-                        // TODO Cook
                         "1"
                     } else {
                         "0"
