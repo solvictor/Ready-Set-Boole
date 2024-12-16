@@ -25,16 +25,16 @@ pub fn eval_formula(formula: &str) -> bool {
             .expect(&format!("Invalid formula '{}'", formula));
         match c {
             '&' => {
-                stack.push_back(p && q);
+                stack.push_back(p & q);
             }
             '|' => {
-                stack.push_back(p || q);
+                stack.push_back(p | q);
             }
             '^' => {
-                stack.push_back(p != q);
+                stack.push_back(p ^ q);
             }
             '>' => {
-                stack.push_back(!p || q);
+                stack.push_back(!p | q);
             }
             '=' => {
                 stack.push_back(p == q);
