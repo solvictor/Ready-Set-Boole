@@ -1,9 +1,7 @@
+mod eval;
+mod gray_code;
 mod operators;
 
-use operators::multiplier;
+// TODO Time and space complexity for each exercice
 
-fn main() {
-    let a: u32 = u32::MAX;
-    let b: u32 = u32::MAX;
-    println!("a = {}, b = {}, a * b = {}", a, b, multiplier(a, b));
-}
+fn main() {}
