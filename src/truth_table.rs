@@ -113,5 +113,14 @@ mod tests {
         print_truth_table("ADJ&|");
         print_truth_table("ADJA&|^");
         print_truth_table("1001&|^");
+        print_truth_table("1A&");
+        print_truth_table("1A^");
+    }
+
+    #[test]
+    fn test_truth_table_invalid() {
+        print_truth_table("1A");
+        print_truth_table("10&B");
+        print_truth_table("1!0&0");
     }
 }

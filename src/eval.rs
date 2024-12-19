@@ -1,51 +1,10 @@
-use std::collections::VecDeque;
-
-// TODO Visualizer
+use crate::BooleanTree;
 
 pub fn eval_formula(formula: &str) -> bool {
-    let mut stack = VecDeque::<bool>::new();
-    for c in formula.chars() {
-        if c == '0' {
-            stack.push_back(false);
-            continue;
-        }
-        if c == '1' {
-            stack.push_back(true);
-            continue;
-        }
-        let q = stack
-            .pop_back()
-            .expect(&format!("Invalid formula '{}'", formula));
-        if c == '!' {
-            stack.push_back(!q);
-            continue;
-        }
-        let p = stack
-            .pop_back()
-            .expect(&format!("Invalid formula '{}'", formula));
-        match c {
-            '&' => {
-                stack.push_back(p & q);
-            }
-            '|' => {
-                stack.push_back(p | q);
-            }
-            '^' => {
-                stack.push_back(p ^ q);
-            }
-            '>' => {
-                stack.push_back(!p | q);
-            }
-            '=' => {
-                stack.push_back(p == q);
-            }
-            _ => panic!("Invalid formula '{}'", formula),
-        }
-    }
-    if stack.len() != 1 {
-        panic!("Invalid formula '{}'", formula);
-    }
-    stack.pop_front().unwrap()
+    BooleanTree::try_from(formula)
+        .expect(&format!("Invalid formula '{}'", formula))
+        .evaluate(None)
+        .expect(&format!("Failed to evaluate '{}'", formula))
 }
 
 #[cfg(test)]
