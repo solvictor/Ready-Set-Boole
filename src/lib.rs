@@ -57,21 +57,21 @@ impl TryFrom<&str> for BooleanTree {
             }
             let q = stack
                 .pop_back()
-                .expect(&format!("Invalid formula '{}'", formula));
+                .ok_or(&format!("Invalid formula '{}'", formula))?;
             if c == '!' {
                 stack.push_back(Self::Not(Box::new(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
-                .expect(&format!("Invalid formula '{}'", formula));
+                .ok_or(&format!("Invalid formula '{}'", formula))?;
             stack.push_back(match c {
                 '&' => Self::And(Box::new(p), Box::new(q)),
                 '|' => Self::Or(Box::new(p), Box::new(q)),
                 '^' => Self::Xor(Box::new(p), Box::new(q)),
                 '>' => Self::Implication(Box::new(p), Box::new(q)),
                 '=' => Self::Equivalence(Box::new(p), Box::new(q)),
-                _ => panic!("Invalid formula '{}'", formula),
+                _ => return Err(format!("Invalid formula '{}'", formula)),
             });
         }
         if stack.len() == 1 {
