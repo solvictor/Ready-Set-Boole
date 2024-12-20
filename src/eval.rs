@@ -4,7 +4,7 @@ pub fn eval_formula(formula: &str) -> bool {
     BooleanTree::try_from(formula)
         .expect(&format!("Invalid formula '{}'", formula))
         .evaluate(None)
-        .expect(&format!("Failed to evaluate '{}'", formula))
+        .expect(&format!("Invalid formula '{}'", formula))
 }
 
 #[cfg(test)]
