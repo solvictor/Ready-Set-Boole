@@ -40,10 +40,11 @@ impl BooleanTree {
 impl TryFrom<&str> for BooleanTree {
     type Error = String;
 
+    // TODO Ignore whitespaces ?
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
         let mut stack = VecDeque::<BooleanTree>::new();
 
-        for c in formula.chars() {
+        for (i, c) in formula.char_indices() {
             match c {
                 '0' | '1' => {
                     stack.push_back(Self::Value(c == '1'));
@@ -57,27 +58,28 @@ impl TryFrom<&str> for BooleanTree {
             }
             let q = stack
                 .pop_back()
-                .ok_or(&format!("Invalid formula '{}'", formula))?;
+                .ok_or(format!("Missing operand at index {}", i))?;
             if c == '!' {
                 stack.push_back(Self::Not(Box::new(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
-                .ok_or(&format!("Invalid formula '{}'", formula))?;
+                .ok_or(format!("Missing operand at index {}", i))?;
             stack.push_back(match c {
                 '&' => Self::And(Box::new(p), Box::new(q)),
                 '|' => Self::Or(Box::new(p), Box::new(q)),
                 '^' => Self::Xor(Box::new(p), Box::new(q)),
                 '>' => Self::Implication(Box::new(p), Box::new(q)),
                 '=' => Self::Equivalence(Box::new(p), Box::new(q)),
-                _ => return Err(format!("Invalid formula '{}'", formula)),
+                _ => return Err(format!("Invalid character '{}'", c)),
             });
         }
-        if stack.len() == 1 {
-            Ok(stack.pop_front().unwrap())
-        } else {
-            Err(format!("Invalid formula '{}'", formula))
+        match stack.len() {
+            1 => Ok(stack.pop_front().unwrap()),
+            0 => Err("Empty formula".into()),
+            2 => Err("Missing operator".into()),
+            _ => Err("Missing operators".into()),
         }
     }
 }
