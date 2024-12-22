@@ -1,7 +1,6 @@
 use crate::BooleanTree;
 use std::collections::HashMap;
 
-// TODO check output results
 pub fn print_truth_table(formula: &str) {
     let tree = match BooleanTree::try_from(formula.to_uppercase().as_str()) {
         Ok(tree) => tree,
@@ -11,45 +10,38 @@ pub fn print_truth_table(formula: &str) {
         }
     };
 
-    let letters: u32 = formula
+    let variables: u32 = formula
         .chars()
         .filter_map(|c| c.is_uppercase().then(|| 1 << (c as usize - 65)))
         .fold(0, |acc, i| acc | i);
 
-    let n = letters.count_ones();
+    let n = variables.count_ones();
 
     // Header
     println!(
         "{}| = |",
         ('A'..='Z')
-            .filter_map(|l| (letters & (1 << (l as u8 - 65)) != 0).then(|| format!("| {} ", l)))
+            .filter_map(|l| (variables & (1 << (l as u8 - 65)) != 0).then(|| format!("| {} ", l)))
             .collect::<String>()
     );
 
     println!("{}|---|", "|---".repeat(n as usize));
 
     // Values
-    let mut letter_to_state = HashMap::<char, bool>::new();
     for state in 0u32..1 << n {
-        ('A'..='Z')
-            .filter(|&l| letters & (1 << (l as u8 - 65)) != 0)
+        let variables_state = ('A'..='Z')
+            .filter(|&name| variables & (1 << (name as u8 - 65)) != 0)
             .enumerate()
-            .for_each(|(i, l)| {
-                letter_to_state.insert(l, state & (1 << (n - i as u32 - 1)) != 0);
-            });
+            .map(|(i, name)| (name, state & (1 << (n - i as u32 - 1)) != 0))
+            .collect::<HashMap<char, bool>>();
         println!(
             "{}| {} |",
             ('A'..='Z')
-                .filter_map(|l| (letters & (1 << (l as u8 - 65)) != 0)
-                    .then(|| format!("| {} ", letter_to_state[&l])))
+                .filter_map(|name| (variables & (1 << (name as u8 - 65)) != 0)
+                    .then(|| format!("| {} ", variables_state[&name] as u8)))
                 .collect::<String>(),
-            if tree.evaluate(Some(&letter_to_state)).unwrap() {
-                '1'
-            } else {
-                '0'
-            }
+            tree.evaluate(Some(&variables_state)).unwrap() as u8
         );
-        letter_to_state.clear();
     }
 }
 
@@ -61,20 +53,20 @@ mod tests {
     #[test]
     #[serial]
     fn test_truth_table() {
-        print_truth_table("AB&C|");
-        print_truth_table("ABC&|");
-        print_truth_table("ADJ&|");
-        print_truth_table("ADJA&|^");
-        print_truth_table("1001&|^");
-        print_truth_table("1A&");
-        print_truth_table("1A^");
+        ["AB&C|", "ADJ&|", "ADJA&|^", "1001&|^", "1A&", "1A^"]
+            .iter()
+            .for_each(|formula| {
+                println!("Formula: '{}'", formula);
+                print_truth_table(formula);
+            });
     }
 
     #[test]
     #[serial]
     fn test_truth_table_invalid() {
-        print_truth_table("1A");
-        print_truth_table("10&B");
-        print_truth_table("1!0&0");
+        ["1A", "10&B", "1!0&0"].iter().for_each(|formula| {
+            println!("Formula: '{}'", formula);
+            print_truth_table(formula);
+        });
     }
 }
