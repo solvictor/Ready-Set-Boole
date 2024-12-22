@@ -1,7 +1,7 @@
 use crate::BooleanTree;
 
 pub fn eval_formula(formula: &str) -> bool {
-    BooleanTree::try_from(formula)
+    BooleanTree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
         .evaluate(None)
         .expect(&format!("Invalid formula '{}'", formula))

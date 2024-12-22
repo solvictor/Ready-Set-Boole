@@ -1,112 +1,65 @@
-use crate::eval;
+use crate::BooleanTree;
+use std::collections::HashMap;
 
-fn is_valid(formula: &str) -> bool {
-    let mut count = 0;
-    for c in formula.chars() {
-        match c {
-            ('A'..='Z') | '0' | '1' => count += 1,
-            '!' => {
-                if count < 1 {
-                    return false;
-                }
-            }
-            '&' | '|' | '^' | '>' | '=' => {
-                if count < 2 {
-                    return false;
-                }
-                count -= 1;
-            }
-            _ => return false,
-        }
-    }
-    count == 1
-}
-
+// TODO check output results
 pub fn print_truth_table(formula: &str) {
-    let formula = formula.to_uppercase();
-
-    if !is_valid(&formula) {
-        eprintln!("Invalid formula");
-        return;
-    }
+    let tree = match BooleanTree::try_from(formula.to_uppercase().as_str()) {
+        Ok(tree) => tree,
+        Err(e) => {
+            eprintln!("Invalid formula '{}': {}", formula, e);
+            return;
+        }
+    };
 
     let letters: u32 = formula
         .chars()
         .filter_map(|c| c.is_uppercase().then(|| 1 << (c as usize - 65)))
         .fold(0, |acc, i| acc | i);
 
-    if letters == 0 {
-        println!("| = |");
-        println!("|---|");
-        println!(
-            "| {} |",
-            if eval::eval_formula(&formula) {
-                '1'
-            } else {
-                '0'
-            }
-        );
-        return;
-    }
-
     let n = letters.count_ones();
 
     // Header
     println!(
-        "| {} | = |",
-        (0..=26u8)
-            .filter_map(|i| (letters & (1 << i) != 0).then(|| ((i + 65) as char).to_string()))
-            .collect::<Vec<String>>()
-            .join(" | ")
+        "{}| = |",
+        ('A'..='Z')
+            .filter_map(|l| (letters & (1 << (l as u8 - 65)) != 0).then(|| format!("| {} ", l)))
+            .collect::<String>()
     );
 
     println!("{}|---|", "|---".repeat(n as usize));
 
     // Values
-    let mut letter_to_state = [0; 26];
+    let mut letter_to_state = HashMap::<char, bool>::new();
     for state in 0u32..1 << n {
-        (0..=26u8)
-            .filter(|l| letters & (1 << l) != 0)
+        ('A'..='Z')
+            .filter(|&l| letters & (1 << (l as u8 - 65)) != 0)
             .enumerate()
             .for_each(|(i, l)| {
-                letter_to_state[l as usize] = (state & (1 << (n - i as u32 - 1))).count_ones();
+                letter_to_state.insert(l, state & (1 << (n - i as u32 - 1)) != 0);
             });
-        let current: String = formula
-            .chars()
-            .map(|c| {
-                if c.is_uppercase() {
-                    (letter_to_state[c as usize - 65] as u8 + 48) as char
-                } else {
-                    c
-                }
-            })
-            .collect();
         println!(
-            "| {} | {} |",
-            (0..=26u8)
-                .filter_map(|l| (letters & (1 << l) != 0).then(|| {
-                    if letter_to_state[l as usize] == 1 {
-                        "1"
-                    } else {
-                        "0"
-                    }
-                }))
-                .collect::<Vec<&str>>()
-                .join(" | "),
-            if eval::eval_formula(&current) {
+            "{}| {} |",
+            ('A'..='Z')
+                .filter_map(|l| (letters & (1 << (l as u8 - 65)) != 0)
+                    .then(|| format!("| {} ", letter_to_state[&l])))
+                .collect::<String>(),
+            if tree.evaluate(Some(&letter_to_state)).unwrap() {
                 '1'
             } else {
                 '0'
             }
         );
+        letter_to_state.clear();
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_truth_table() {
         print_truth_table("AB&C|");
         print_truth_table("ABC&|");
@@ -118,6 +71,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_truth_table_invalid() {
         print_truth_table("1A");
         print_truth_table("10&B");

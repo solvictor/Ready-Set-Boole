@@ -7,3 +7,6 @@ edition = "2021"
 
 [profile.test]
 overflow-checks = false
+
+[dev-dependencies]
+serial_test = "3.2.0"
