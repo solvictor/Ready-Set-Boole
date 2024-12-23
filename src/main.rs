@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use ready_set_boole::BooleanTree;
+use std::collections::HashMap;
 
 mod eval;
 mod gray_code;
@@ -9,7 +8,7 @@ mod operators;
 // TODO Time and space complexity for each exercice
 
 fn main() {
-    let tree = BooleanTree::try_from("AB|");
+    let tree = BooleanTree::try_from("101|&");
     println!("{:?}", tree);
 
     let tree = tree.unwrap();
@@ -19,5 +18,5 @@ fn main() {
     state.insert('A', true);
     // state.insert('B', true);
 
-    println!("{:?}", tree.evaluate(Some(&state)));
+    println!("{}", tree);
 }

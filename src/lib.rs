@@ -44,9 +44,53 @@ impl BooleanTree {
 }
 
 // TODO
+
+/*
+101|& should give
+
+  ^
+ / \
+1   v
+   / \
+  0   1
+
+
+*/
 impl Display for BooleanTree {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        writeln!(f, "Tree")?;
+        fn leftmost(tree: &BooleanTree) -> u32 {
+            match tree {
+                BooleanTree::Value(_) => 0,
+                BooleanTree::Variable(_) => 0,
+                BooleanTree::Not(sub) => leftmost(sub),
+                BooleanTree::Or(left, _) => 2 + leftmost(left),
+                BooleanTree::And(left, _) => 2 + leftmost(left),
+                BooleanTree::Xor(left, _) => 2 + leftmost(left),
+                BooleanTree::Implication(left, _) => 2 + leftmost(left),
+                BooleanTree::Equivalence(left, _) => 2 + leftmost(left),
+            }
+        }
+        let mut pad = leftmost(&self);
+        writeln!(f, "pad {}", pad)?;
+        let mut deque = VecDeque::<&BooleanTree>::new();
+        deque.push_back(self);
+        while !deque.is_empty() {
+            for _ in 0..deque.len() {
+                let cur = deque.pop_front().unwrap();
+                match cur {
+                    BooleanTree::Value(_) => todo!(),
+                    BooleanTree::Variable(_) => todo!(),
+                    BooleanTree::Not(boolean_tree) => todo!(),
+                    BooleanTree::Or(boolean_tree, boolean_tree1) => todo!(),
+                    BooleanTree::And(boolean_tree, boolean_tree1) => todo!(),
+                    BooleanTree::Xor(boolean_tree, boolean_tree1) => todo!(),
+                    BooleanTree::Implication(boolean_tree, boolean_tree1) => todo!(),
+                    BooleanTree::Equivalence(boolean_tree, boolean_tree1) => todo!(),
+                }
+            }
+        }
+        Ok(())
     }
 }
 
