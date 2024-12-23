@@ -1,11 +1,12 @@
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    fmt::Display,
+};
 
 pub mod eval;
 pub mod gray_code;
 pub mod operators;
 pub mod truth_table;
-
-// TODO Visualizer
 
 #[derive(Clone, Debug)]
 pub enum BooleanTree {
@@ -34,6 +35,18 @@ impl BooleanTree {
             BooleanTree::Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
             BooleanTree::Equivalence(p, q) => p.evaluate(state)? == q.evaluate(state)?,
         })
+    }
+
+    // TODO
+    pub fn rpn_formula(&self) -> String {
+        todo!()
+    }
+}
+
+// TODO
+impl Display for BooleanTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
     }
 }
 
