@@ -13,8 +13,8 @@ pub enum BooleanTree {
     Value(bool),
     Variable(char),
     Not(Box<BooleanTree>),
-    Or(Box<BooleanTree>, Box<BooleanTree>),
     And(Box<BooleanTree>, Box<BooleanTree>),
+    Or(Box<BooleanTree>, Box<BooleanTree>),
     Xor(Box<BooleanTree>, Box<BooleanTree>),
     Implication(Box<BooleanTree>, Box<BooleanTree>),
     Equivalence(Box<BooleanTree>, Box<BooleanTree>),
@@ -29,17 +29,49 @@ impl BooleanTree {
                 .get(name)
                 .ok_or(&format!("Missing value for {} in state", name))?,
             BooleanTree::Not(p) => !p.evaluate(state)?,
-            BooleanTree::Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
             BooleanTree::And(p, q) => p.evaluate(state)? & q.evaluate(state)?,
+            BooleanTree::Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
             BooleanTree::Xor(p, q) => p.evaluate(state)? ^ q.evaluate(state)?,
             BooleanTree::Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
             BooleanTree::Equivalence(p, q) => p.evaluate(state)? == q.evaluate(state)?,
         })
     }
 
-    // TODO
+    // LGTM
     pub fn rpn_formula(&self) -> String {
-        todo!()
+        match self {
+            BooleanTree::Value(val) => if *val { "1" } else { "0" }.to_string(),
+            BooleanTree::Variable(var) => var.to_string(),
+            BooleanTree::Not(sub) => sub.rpn_formula() + "!",
+            BooleanTree::And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
+            BooleanTree::Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
+            BooleanTree::Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
+            BooleanTree::Implication(left, right) => {
+                left.rpn_formula() + &right.rpn_formula() + ">"
+            }
+            BooleanTree::Equivalence(left, right) => {
+                left.rpn_formula() + &right.rpn_formula() + "="
+            }
+        }
+    }
+
+    pub fn as_char(&self) -> char {
+        match self {
+            BooleanTree::Value(val) => {
+                if *val {
+                    '⊤'
+                } else {
+                    '⊥'
+                }
+            }
+            BooleanTree::Variable(var) => *var,
+            BooleanTree::Not(_) => '¬',
+            BooleanTree::And(_, _) => '∧',
+            BooleanTree::Or(_, _) => '∨',
+            BooleanTree::Xor(_, _) => '⊕',
+            BooleanTree::Implication(_, _) => '⇒',
+            BooleanTree::Equivalence(_, _) => '⇔',
+        }
     }
 }
 
@@ -59,36 +91,61 @@ impl BooleanTree {
 impl Display for BooleanTree {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Tree")?;
-        fn leftmost(tree: &BooleanTree) -> u32 {
+        fn leftmost(tree: &BooleanTree) -> i32 {
             match tree {
                 BooleanTree::Value(_) => 0,
                 BooleanTree::Variable(_) => 0,
                 BooleanTree::Not(sub) => leftmost(sub),
-                BooleanTree::Or(left, _) => 2 + leftmost(left),
-                BooleanTree::And(left, _) => 2 + leftmost(left),
-                BooleanTree::Xor(left, _) => 2 + leftmost(left),
-                BooleanTree::Implication(left, _) => 2 + leftmost(left),
-                BooleanTree::Equivalence(left, _) => 2 + leftmost(left),
-            }
-        }
-        let mut pad = leftmost(&self);
-        writeln!(f, "pad {}", pad)?;
-        let mut deque = VecDeque::<&BooleanTree>::new();
-        deque.push_back(self);
-        while !deque.is_empty() {
-            for _ in 0..deque.len() {
-                let cur = deque.pop_front().unwrap();
-                match cur {
-                    BooleanTree::Value(_) => todo!(),
-                    BooleanTree::Variable(_) => todo!(),
-                    BooleanTree::Not(boolean_tree) => todo!(),
-                    BooleanTree::Or(boolean_tree, boolean_tree1) => todo!(),
-                    BooleanTree::And(boolean_tree, boolean_tree1) => todo!(),
-                    BooleanTree::Xor(boolean_tree, boolean_tree1) => todo!(),
-                    BooleanTree::Implication(boolean_tree, boolean_tree1) => todo!(),
-                    BooleanTree::Equivalence(boolean_tree, boolean_tree1) => todo!(),
+                BooleanTree::And(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
+                BooleanTree::Or(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
+                BooleanTree::Xor(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
+                BooleanTree::Implication(left, right) => {
+                    (2 + leftmost(left)).max(leftmost(right) - 2)
+                }
+                BooleanTree::Equivalence(left, right) => {
+                    (2 + leftmost(left)).max(leftmost(right) - 2)
                 }
             }
+        }
+        let mut pad = leftmost(&self).max(0) as usize;
+        writeln!(f, "pad {}", pad)?;
+        let mut level = 0;
+        let mut deque = VecDeque::<(&BooleanTree, usize, usize)>::new();
+        deque.push_back((self, 0, 0));
+        while !deque.is_empty() {
+            if level != 0 {}
+            print!("{}", " ".repeat(pad));
+            for _ in 0..deque.len() {
+                let (cur, l, r) = deque.pop_front().unwrap();
+                print!("{}", cur.as_char());
+                match cur {
+                    BooleanTree::Value(_) => {}
+                    BooleanTree::Variable(_) => {}
+                    BooleanTree::Not(sub) => deque.push_back((sub, l, r)),
+                    BooleanTree::And(left, right) => {
+                        deque.push_back((left, l + 1, r));
+                        deque.push_back((right, l, r + 1));
+                    }
+                    BooleanTree::Or(left, right) => {
+                        deque.push_back((left, l + 1, r));
+                        deque.push_back((right, l, r + 1));
+                    }
+                    BooleanTree::Xor(left, right) => {
+                        deque.push_back((left, l + 1, r));
+                        deque.push_back((right, l, r + 1));
+                    }
+                    BooleanTree::Implication(left, right) => {
+                        deque.push_back((left, l + 1, r));
+                        deque.push_back((right, l, r + 1));
+                    }
+                    BooleanTree::Equivalence(left, right) => {
+                        deque.push_back((left, l + 1, r));
+                        deque.push_back((right, l, r + 1));
+                    }
+                }
+            }
+            println!();
+            level += 1;
         }
         Ok(())
     }
@@ -138,5 +195,27 @@ impl TryFrom<&str> for BooleanTree {
             2 => Err("Missing operator".into()),
             _ => Err("Missing operators".into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_boolean_tree_rpn_formula() {
+        [
+            "AB&C|",
+            "ADJ&|",
+            "ADJA&|^",
+            "1001&|^",
+            "1A&",
+            "10BA&|^10BC=>!&|",
+        ]
+        .iter()
+        .for_each(|&formula| {
+            let tree = BooleanTree::try_from(formula).expect("Failed to parse formula");
+            assert_eq!(formula, tree.rpn_formula().as_str());
+        });
     }
 }
