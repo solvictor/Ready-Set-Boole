@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 mod eval;
 mod gray_code;
+mod normal_forms;
 mod operators;
 
 // TODO Time and space complexity for each exercice

@@ -73,6 +73,16 @@ impl BooleanTree {
             BooleanTree::Equivalence(_, _) => '⇔',
         }
     }
+
+    // TODO
+    pub fn nnf(&self) -> BooleanTree {
+        todo!()
+    }
+
+    // TODO
+    pub fn cnf(&self) -> BooleanTree {
+        todo!()
+    }
 }
 
 // TODO
@@ -96,13 +106,11 @@ impl Display for BooleanTree {
                 BooleanTree::Value(_) => 0,
                 BooleanTree::Variable(_) => 0,
                 BooleanTree::Not(sub) => leftmost(sub),
-                BooleanTree::And(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
-                BooleanTree::Or(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
-                BooleanTree::Xor(left, right) => (2 + leftmost(left)).max(leftmost(right) - 2),
-                BooleanTree::Implication(left, right) => {
-                    (2 + leftmost(left)).max(leftmost(right) - 2)
-                }
-                BooleanTree::Equivalence(left, right) => {
+                BooleanTree::And(left, right)
+                | BooleanTree::Or(left, right)
+                | BooleanTree::Xor(left, right)
+                | BooleanTree::Implication(left, right)
+                | BooleanTree::Equivalence(left, right) => {
                     (2 + leftmost(left)).max(leftmost(right) - 2)
                 }
             }
@@ -122,23 +130,11 @@ impl Display for BooleanTree {
                     BooleanTree::Value(_) => {}
                     BooleanTree::Variable(_) => {}
                     BooleanTree::Not(sub) => deque.push_back((sub, l, r)),
-                    BooleanTree::And(left, right) => {
-                        deque.push_back((left, l + 1, r));
-                        deque.push_back((right, l, r + 1));
-                    }
-                    BooleanTree::Or(left, right) => {
-                        deque.push_back((left, l + 1, r));
-                        deque.push_back((right, l, r + 1));
-                    }
-                    BooleanTree::Xor(left, right) => {
-                        deque.push_back((left, l + 1, r));
-                        deque.push_back((right, l, r + 1));
-                    }
-                    BooleanTree::Implication(left, right) => {
-                        deque.push_back((left, l + 1, r));
-                        deque.push_back((right, l, r + 1));
-                    }
-                    BooleanTree::Equivalence(left, right) => {
+                    BooleanTree::And(left, right)
+                    | BooleanTree::Or(left, right)
+                    | BooleanTree::Xor(left, right)
+                    | BooleanTree::Implication(left, right)
+                    | BooleanTree::Equivalence(left, right) => {
                         deque.push_back((left, l + 1, r));
                         deque.push_back((right, l, r + 1));
                     }
