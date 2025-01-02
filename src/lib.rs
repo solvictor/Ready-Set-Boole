@@ -74,9 +74,32 @@ impl BooleanTree {
         }
     }
 
-    // TODO
+    // TODO less clone ?
     pub fn nnf(&self) -> BooleanTree {
-        todo!()
+        use BooleanTree::*;
+
+        match self {
+            Value(_) | Variable(_) => self.clone(),
+            Not(sub) => match *sub.clone() {
+                Value(_) | Variable(_) => self.clone(),
+                Not(subb) => subb.nnf(),
+                And(left, right) => Or(Box::new(Not(left).nnf()), Box::new(Not(right).nnf())),
+                Or(left, right) => And(Box::new(Not(left).nnf()), Box::new(Not(right).nnf())),
+                Xor(left, right) => Equivalence(left, right).nnf(), // TODO verify
+                Implication(left, right) => todo!(),
+                Equivalence(left, right) => todo!(),
+            },
+            And(left, right) => And(Box::new(left.nnf()), Box::new(right.nnf())),
+            Or(left, right) => Or(Box::new(left.nnf()), Box::new(right.nnf())),
+            Xor(left, right) => Xor(Box::new(left.nnf()), Box::new(right.nnf())),
+            Implication(left, right) => {
+                Or(Box::new(Not(left.clone()).nnf()), Box::new(right.nnf()))
+            }
+            Equivalence(left, right) => And(
+                Box::new(Implication(left.clone(), right.clone()).nnf()),
+                Box::new(Implication(right.clone(), left.clone()).nnf()),
+            ),
+        }
     }
 
     // TODO
