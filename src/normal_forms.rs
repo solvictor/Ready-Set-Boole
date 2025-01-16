@@ -18,8 +18,19 @@ fn conjunctive_normal_form(formula: &str) -> String {
 mod tests {
     use super::*;
 
-    #[test]
+    #[test] // TODO More checks
     fn test_nnf() {
-        todo!()
+        [
+            ("AB&!", "A!B!|"),
+            ("A!B!|", "A!B!|"),
+            ("AB|", "AB|"),
+            ("AB|!", "A!B!&"),
+            ("AB!!&", "AB&"),
+            ("AB!!!&", "AB!&"),
+        ]
+        .iter()
+        .for_each(|&(formula, nnf)| {
+            assert_eq!(negation_normal_form(formula), nnf);
+        });
     }
 }

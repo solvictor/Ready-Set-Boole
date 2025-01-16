@@ -83,11 +83,19 @@ impl BooleanTree {
             Not(sub) => match *sub.clone() {
                 Value(_) | Variable(_) => self.clone(),
                 Not(subb) => subb.nnf(),
-                And(left, right) => Or(Box::new(Not(left).nnf()), Box::new(Not(right).nnf())),
-                Or(left, right) => And(Box::new(Not(left).nnf()), Box::new(Not(right).nnf())),
-                Xor(left, right) => Equivalence(left, right).nnf(), // TODO verify
-                Implication(left, right) => todo!(),
-                Equivalence(left, right) => todo!(),
+                And(left, right) => Or(Box::new(Not(left)), Box::new(Not(right))).nnf(),
+                Or(left, right) => And(Box::new(Not(left)), Box::new(Not(right))).nnf(),
+                Xor(left, right) => And(
+                    Box::new(Or(Box::new(Not(left.clone())), right.clone())),
+                    Box::new(Or(left.clone(), Box::new(Not(right.clone())))),
+                )
+                .nnf(),
+                Implication(left, right) => And(left, Box::new(Not(right))).nnf(),
+                Equivalence(left, right) => Or(
+                    Box::new(And(left.clone(), Box::new(Not(right.clone())))),
+                    Box::new(And(right.clone(), Box::new(Not(left.clone())))),
+                )
+                .nnf(),
             },
             And(left, right) => And(Box::new(left.nnf()), Box::new(right.nnf())),
             Or(left, right) => Or(Box::new(left.nnf()), Box::new(right.nnf())),
@@ -123,50 +131,19 @@ impl BooleanTree {
 */
 impl Display for BooleanTree {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Tree")?;
-        fn leftmost(tree: &BooleanTree) -> i32 {
-            match tree {
-                BooleanTree::Value(_) => 0,
-                BooleanTree::Variable(_) => 0,
-                BooleanTree::Not(sub) => leftmost(sub),
-                BooleanTree::And(left, right)
-                | BooleanTree::Or(left, right)
-                | BooleanTree::Xor(left, right)
-                | BooleanTree::Implication(left, right)
-                | BooleanTree::Equivalence(left, right) => {
-                    (2 + leftmost(left)).max(leftmost(right) - 2)
-                }
+        use BooleanTree::*;
+
+        match self {
+            Value(_) | Variable(_) => write!(f, "{}", self.as_char()),
+            Not(inner) => write!(f, "{}({})", self.as_char(), inner),
+            And(left, right)
+            | Or(left, right)
+            | Xor(left, right)
+            | Implication(left, right)
+            | Equivalence(left, right) => {
+                write!(f, "({} {} {})", left, self.as_char(), right)
             }
         }
-        let mut pad = leftmost(&self).max(0) as usize;
-        writeln!(f, "pad {}", pad)?;
-        let mut level = 0;
-        let mut deque = VecDeque::<(&BooleanTree, usize, usize)>::new();
-        deque.push_back((self, 0, 0));
-        while !deque.is_empty() {
-            if level != 0 {}
-            print!("{}", " ".repeat(pad));
-            for _ in 0..deque.len() {
-                let (cur, l, r) = deque.pop_front().unwrap();
-                print!("{}", cur.as_char());
-                match cur {
-                    BooleanTree::Value(_) => {}
-                    BooleanTree::Variable(_) => {}
-                    BooleanTree::Not(sub) => deque.push_back((sub, l, r)),
-                    BooleanTree::And(left, right)
-                    | BooleanTree::Or(left, right)
-                    | BooleanTree::Xor(left, right)
-                    | BooleanTree::Implication(left, right)
-                    | BooleanTree::Equivalence(left, right) => {
-                        deque.push_back((left, l + 1, r));
-                        deque.push_back((right, l, r + 1));
-                    }
-                }
-            }
-            println!();
-            level += 1;
-        }
-        Ok(())
     }
 }
 

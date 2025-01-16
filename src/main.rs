@@ -9,7 +9,7 @@ mod operators;
 // TODO Time and space complexity for each exercice
 
 fn main() {
-    let tree = BooleanTree::try_from("101|&");
+    let tree = BooleanTree::try_from("101A|&!^");
     println!("{:?}", tree);
 
     let tree = tree.unwrap();
