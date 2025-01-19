@@ -8,6 +8,13 @@ pub mod gray_code;
 pub mod operators;
 pub mod truth_table;
 
+#[macro_export]
+macro_rules! boxed {
+    ($a:expr) => {
+        Box::new($a)
+    };
+}
+
 #[derive(Clone, Debug)]
 pub enum BooleanTree {
     Value(bool),
@@ -22,55 +29,57 @@ pub enum BooleanTree {
 
 impl BooleanTree {
     pub fn evaluate(&self, state: Option<&HashMap<char, bool>>) -> Result<bool, String> {
+        use BooleanTree::*;
+
         Ok(match self {
-            BooleanTree::Value(val) => *val,
-            BooleanTree::Variable(name) => *state
+            Value(val) => *val,
+            Variable(name) => *state
                 .ok_or("Missing state")?
                 .get(name)
                 .ok_or(&format!("Missing value for {} in state", name))?,
-            BooleanTree::Not(p) => !p.evaluate(state)?,
-            BooleanTree::And(p, q) => p.evaluate(state)? & q.evaluate(state)?,
-            BooleanTree::Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
-            BooleanTree::Xor(p, q) => p.evaluate(state)? ^ q.evaluate(state)?,
-            BooleanTree::Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
-            BooleanTree::Equivalence(p, q) => p.evaluate(state)? == q.evaluate(state)?,
+            Not(p) => !p.evaluate(state)?,
+            And(p, q) => p.evaluate(state)? & q.evaluate(state)?,
+            Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
+            Xor(p, q) => p.evaluate(state)? ^ q.evaluate(state)?,
+            Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
+            Equivalence(p, q) => p.evaluate(state)? == q.evaluate(state)?,
         })
     }
 
     // LGTM
     pub fn rpn_formula(&self) -> String {
+        use BooleanTree::*;
+
         match self {
-            BooleanTree::Value(val) => if *val { "1" } else { "0" }.to_string(),
-            BooleanTree::Variable(var) => var.to_string(),
-            BooleanTree::Not(sub) => sub.rpn_formula() + "!",
-            BooleanTree::And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
-            BooleanTree::Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
-            BooleanTree::Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
-            BooleanTree::Implication(left, right) => {
-                left.rpn_formula() + &right.rpn_formula() + ">"
-            }
-            BooleanTree::Equivalence(left, right) => {
-                left.rpn_formula() + &right.rpn_formula() + "="
-            }
+            Value(val) => if *val { "1" } else { "0" }.to_string(),
+            Variable(var) => var.to_string(),
+            Not(sub) => sub.rpn_formula() + "!",
+            And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
+            Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
+            Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
+            Implication(left, right) => left.rpn_formula() + &right.rpn_formula() + ">",
+            Equivalence(left, right) => left.rpn_formula() + &right.rpn_formula() + "=",
         }
     }
 
     pub fn as_char(&self) -> char {
+        use BooleanTree::*;
+
         match self {
-            BooleanTree::Value(val) => {
+            Value(val) => {
                 if *val {
                     '⊤'
                 } else {
                     '⊥'
                 }
             }
-            BooleanTree::Variable(var) => *var,
-            BooleanTree::Not(_) => '¬',
-            BooleanTree::And(_, _) => '∧',
-            BooleanTree::Or(_, _) => '∨',
-            BooleanTree::Xor(_, _) => '⊕',
-            BooleanTree::Implication(_, _) => '⇒',
-            BooleanTree::Equivalence(_, _) => '⇔',
+            Variable(var) => *var,
+            Not(_) => '¬',
+            And(_, _) => '∧',
+            Or(_, _) => '∨',
+            Xor(_, _) => '⊕',
+            Implication(_, _) => '⇒',
+            Equivalence(_, _) => '⇔',
         }
     }
 
@@ -83,30 +92,33 @@ impl BooleanTree {
             Not(sub) => match *sub.clone() {
                 Value(_) | Variable(_) => self.clone(),
                 Not(subb) => subb.nnf(),
-                And(left, right) => Or(Box::new(Not(left)), Box::new(Not(right))).nnf(),
-                Or(left, right) => And(Box::new(Not(left)), Box::new(Not(right))).nnf(),
+                And(left, right) => Or(boxed!(Not(left)), boxed!(Not(right))).nnf(),
+                Or(left, right) => And(boxed!(Not(left)), boxed!(Not(right))).nnf(),
                 Xor(left, right) => And(
-                    Box::new(Or(Box::new(Not(left.clone())), right.clone())),
-                    Box::new(Or(left.clone(), Box::new(Not(right.clone())))),
+                    boxed!(Or(boxed!(Not(left.clone())), right.clone())),
+                    boxed!(Or(left.clone(), boxed!(Not(right.clone())))),
                 )
                 .nnf(),
-                Implication(left, right) => And(left, Box::new(Not(right))).nnf(),
+                Implication(left, right) => And(left, boxed!(Not(right))).nnf(),
                 Equivalence(left, right) => Or(
-                    Box::new(And(left.clone(), Box::new(Not(right.clone())))),
-                    Box::new(And(right.clone(), Box::new(Not(left.clone())))),
+                    boxed!(And(left.clone(), boxed!(Not(right.clone())))),
+                    boxed!(And(right.clone(), boxed!(Not(left.clone())))),
                 )
                 .nnf(),
             },
-            And(left, right) => And(Box::new(left.nnf()), Box::new(right.nnf())),
-            Or(left, right) => Or(Box::new(left.nnf()), Box::new(right.nnf())),
-            Xor(left, right) => Xor(Box::new(left.nnf()), Box::new(right.nnf())),
-            Implication(left, right) => {
-                Or(Box::new(Not(left.clone()).nnf()), Box::new(right.nnf()))
-            }
+            And(left, right) => And(boxed!(left.nnf()), boxed!(right.nnf())),
+            Or(left, right) => Or(boxed!(left.nnf()), boxed!(right.nnf())),
+            Xor(left, right) => Or(
+                boxed!(And(boxed!(Not(left.clone())), right.clone())),
+                boxed!(And(left.clone(), boxed!(Not(right.clone())))),
+            )
+            .nnf(),
+            Implication(left, right) => Or(boxed!(Not(left.clone())), right.clone()).nnf(),
             Equivalence(left, right) => And(
-                Box::new(Implication(left.clone(), right.clone()).nnf()),
-                Box::new(Implication(right.clone(), left.clone()).nnf()),
-            ),
+                boxed!(Implication(left.clone(), right.clone())),
+                boxed!(Implication(right.clone(), left.clone())),
+            )
+            .nnf(),
         }
     }
 
