@@ -84,6 +84,7 @@ impl BooleanTree {
     }
 
     // TODO less clone ?
+    // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
     pub fn nnf(&self) -> BooleanTree {
         use BooleanTree::*;
 
@@ -101,6 +102,7 @@ impl BooleanTree {
                 .nnf(),
                 Implication(left, right) => And(left, boxed!(Not(right))).nnf(),
                 Equivalence(left, right) => Or(
+                    // TODO Rework based on below
                     boxed!(And(left.clone(), boxed!(Not(right.clone())))),
                     boxed!(And(right.clone(), boxed!(Not(left.clone())))),
                 )
