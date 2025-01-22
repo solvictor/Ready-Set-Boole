@@ -114,9 +114,9 @@ impl BooleanTree {
             )
             .nnf(),
             Implication(left, right) => Or(boxed!(Not(left.clone())), right.clone()).nnf(),
-            Equivalence(left, right) => And(
-                boxed!(Implication(left.clone(), right.clone())),
-                boxed!(Implication(right.clone(), left.clone())),
+            Equivalence(left, right) => Or(
+                boxed!(And(left.clone(), right.clone())),
+                boxed!(And(boxed!(Not(left.clone())), boxed!(Not(right.clone())))),
             )
             .nnf(),
         }

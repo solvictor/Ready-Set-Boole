@@ -26,7 +26,7 @@ mod tests {
             ("AB^!", "A!B|AB!|&"), // TODO Check
             ("AB>!", "AB!&"),
             ("AB=!", "AB!&BA!&|"), // TODO Check
-            ("AB=", "A!B|B!A|&"),  // TODO Check
+            ("AB=", "AB&A!B!&|"),  // TODO Check
             ("A!B!|", "A!B!|"),
             ("AB|", "AB|"),
             ("AB|!", "A!B!&"),
