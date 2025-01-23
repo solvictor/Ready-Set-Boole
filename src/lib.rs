@@ -96,15 +96,14 @@ impl BooleanTree {
                 And(left, right) => Or(boxed!(Not(left)), boxed!(Not(right))).nnf(),
                 Or(left, right) => And(boxed!(Not(left)), boxed!(Not(right))).nnf(),
                 Xor(left, right) => And(
-                    boxed!(Or(boxed!(Not(left.clone())), right.clone())),
                     boxed!(Or(left.clone(), boxed!(Not(right.clone())))),
+                    boxed!(Or(boxed!(Not(left.clone())), right.clone())),
                 )
                 .nnf(),
                 Implication(left, right) => And(left, boxed!(Not(right))).nnf(),
-                Equivalence(left, right) => Or(
-                    // TODO Rework based on below
-                    boxed!(And(left.clone(), boxed!(Not(right.clone())))),
-                    boxed!(And(right.clone(), boxed!(Not(left.clone())))),
+                Equivalence(left, right) => And(
+                    boxed!(Or(left.clone(), right.clone())),
+                    boxed!(Or(boxed!(Not(left.clone())), boxed!(Not(right.clone())))),
                 )
                 .nnf(),
             },

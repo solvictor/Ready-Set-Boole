@@ -23,10 +23,11 @@ mod tests {
         [
             ("AB&!", "A!B!|"),
             ("AB|!", "A!B!&"),
-            ("AB^!", "A!B|AB!|&"), // TODO Check
+            ("AB^", "A!B&AB!&|"),
+            ("AB^!", "AB!|A!B|&"),
             ("AB>!", "AB!&"),
-            ("AB=!", "AB!&BA!&|"), // TODO Check
-            ("AB=", "AB&A!B!&|"),  // TODO Check
+            ("AB=!", "AB|A!B!|&"),
+            ("AB=", "AB&A!B!&|"),
             ("A!B!|", "A!B!|"),
             ("AB|", "AB|"),
             ("AB|!", "A!B!&"),
@@ -35,14 +36,6 @@ mod tests {
         ]
         .iter()
         .for_each(|&(formula, nnf)| {
-            println!(
-                "l={} r={} f={}",
-                formula.clone(),
-                nnf.clone(),
-                BooleanTree::try_from(formula.to_uppercase().as_str())
-                    .expect(&format!("Invalid formula '{}'", formula))
-                    .nnf()
-            );
             assert_eq!(negation_normal_form(formula), nnf);
         });
     }
