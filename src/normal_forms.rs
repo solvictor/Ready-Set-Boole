@@ -10,6 +10,7 @@ fn negation_normal_form(formula: &str) -> String {
 fn conjunctive_normal_form(formula: &str) -> String {
     BooleanTree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
+        .nnf() // TODO can we do everything in cnf directly ?
         .cnf()
         .rpn_formula()
 }
@@ -49,6 +50,42 @@ mod tests {
         .iter()
         .for_each(|&(formula, nnf)| {
             assert_eq!(negation_normal_form(formula), nnf);
+        });
+    }
+
+    #[test]
+    fn test_cnf_subject() {
+        [
+            ("AB&!", "A!B!|"),
+            ("AB|!", "A!B!&"),
+            ("AB|C&", "AB|C&"),
+            ("AB|C|D|", "ABCD|||"),
+            ("AB&C&D&", "ABCD&&&"),
+            ("AB&!C!|", "A!B!C!||"),
+            ("AB|!C!&", "A!B!C!&&"),
+        ]
+        .iter()
+        .for_each(|&(formula, cnf)| {
+            assert_eq!(conjunctive_normal_form(formula), cnf);
+        });
+    }
+
+    #[test]
+    fn test_cnf() {
+        [
+            // ("AB^", "A!B&AB!&|"),
+            // ("AB^!", "AB!|A!B|&"),
+            // ("AB>!", "AB!&"),
+            // ("AB=!", "AB|A!B!|&"),
+            // ("A!B!|", "A!B!|"),
+            // ("AB|", "AB|"),
+            // ("AB|!", "A!B!&"),
+            // ("AB!!&", "AB&"),
+            // ("AB!!!&", "AB!&"),
+        ]
+        .iter()
+        .for_each(|&(formula, cnf)| {
+            assert_eq!(conjunctive_normal_form(formula), cnf);
         });
     }
 }
