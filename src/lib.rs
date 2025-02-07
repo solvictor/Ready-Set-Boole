@@ -130,16 +130,17 @@ impl BooleanTree {
 
         match self {
             Value(_) | Variable(_) | Not(_) => Ok(self.clone()),
-            And(left, right) => todo!(), // skipping
+            And(left, right) => Ok(And(boxed!(left.cnf()?), boxed!(right.cnf()?))), // skipping
             Or(left, right) => {
                 let left = left.cnf()?;
                 let right = right.cnf()?;
-                match (left, right) {
+                match (&left, &right) {
+                    // TODO Maybe must separate cases
                     (a, And(b, c)) | (And(b, c), a) => Ok(And(
-                        boxed!(Or(boxed!(a.clone()), boxed!(*b))),
-                        boxed!(Or(boxed!(a.clone()), boxed!(*c))),
+                        boxed!(Or(boxed!(a.clone()), boxed!((**b).clone()))), // ugly
+                        boxed!(Or(boxed!(a.clone()), boxed!((**c).clone()))),
                     )),
-                    _ => todo!(),
+                    _ => Ok(Or(boxed!(left), boxed!(right))),
                 }
             }
             _ => Err("Unexpected operator in ".into()),

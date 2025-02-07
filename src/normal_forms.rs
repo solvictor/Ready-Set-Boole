@@ -12,7 +12,7 @@ fn conjunctive_normal_form(formula: &str) -> String {
         .expect(&format!("Invalid formula '{}'", formula))
         .nnf() // TODO can we do everything in cnf directly ?
         .cnf()
-        .unwrap() // Should always be ok because of nnf
+        .unwrap() // Should always be ok thanks to nnf
         .rpn_formula()
 }
 
