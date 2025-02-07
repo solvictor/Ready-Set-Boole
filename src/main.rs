@@ -7,6 +7,7 @@ mod normal_forms;
 mod operators;
 
 // TODO Time and space complexity for each exercice
+// TODO Readme and repo cleanup
 
 fn main() {
     let tree = BooleanTree::try_from("101A|&!^");
