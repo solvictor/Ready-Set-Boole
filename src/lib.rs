@@ -124,17 +124,24 @@ impl BooleanTree {
         }
     }
 
-    // TODO
+    // TODO check
     pub fn cnf(&self) -> Result<Self, String> {
         use BooleanTree::*;
 
         match self {
             Value(_) | Variable(_) | Not(_) => Ok(self.clone()),
-            And(left, right) => match (left, right) {
-                (a, Or(b, c)) => {}
-                _ => {}
-            },
-            Or(left, right) => todo!(),
+            And(left, right) => todo!(), // skipping
+            Or(left, right) => {
+                let left = left.cnf()?;
+                let right = right.cnf()?;
+                match (left, right) {
+                    (a, And(b, c)) | (And(b, c), a) => Ok(And(
+                        boxed!(Or(boxed!(a.clone()), boxed!(*b))),
+                        boxed!(Or(boxed!(a.clone()), boxed!(*c))),
+                    )),
+                    _ => todo!(),
+                }
+            }
             _ => Err("Unexpected operator in ".into()),
         }
     }

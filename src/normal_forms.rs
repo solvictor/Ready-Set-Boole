@@ -12,6 +12,7 @@ fn conjunctive_normal_form(formula: &str) -> String {
         .expect(&format!("Invalid formula '{}'", formula))
         .nnf() // TODO can we do everything in cnf directly ?
         .cnf()
+        .unwrap() // Should always be ok because of nnf
         .rpn_formula()
 }
 
@@ -70,22 +71,23 @@ mod tests {
         });
     }
 
-    #[test]
-    fn test_cnf() {
-        [
-            // ("AB^", "A!B&AB!&|"),
-            // ("AB^!", "AB!|A!B|&"),
-            // ("AB>!", "AB!&"),
-            // ("AB=!", "AB|A!B!|&"),
-            // ("A!B!|", "A!B!|"),
-            // ("AB|", "AB|"),
-            // ("AB|!", "A!B!&"),
-            // ("AB!!&", "AB&"),
-            // ("AB!!!&", "AB!&"),
-        ]
-        .iter()
-        .for_each(|&(formula, cnf)| {
-            assert_eq!(conjunctive_normal_form(formula), cnf);
-        });
-    }
+    // TODO Add tests
+    // #[test]
+    // fn test_cnf() {
+    //     [
+    //         // ("AB^", "A!B&AB!&|"),
+    //         // ("AB^!", "AB!|A!B|&"),
+    //         // ("AB>!", "AB!&"),
+    //         // ("AB=!", "AB|A!B!|&"),
+    //         // ("A!B!|", "A!B!|"),
+    //         // ("AB|", "AB|"),
+    //         // ("AB|!", "A!B!&"),
+    //         // ("AB!!&", "AB&"),
+    //         // ("AB!!!&", "AB!&"),
+    //     ]
+    //     .iter()
+    //     .for_each(|&(formula, cnf)| {
+    //         assert_eq!(conjunctive_normal_form(formula), cnf);
+    //     });
+    // }
 }
