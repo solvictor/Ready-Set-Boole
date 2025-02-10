@@ -143,8 +143,51 @@ impl BooleanTree {
                     _ => Ok(Or(boxed!(left), boxed!(right))),
                 }
             }
-            _ => Err("Unexpected operator in ".into()),
+            _ => Err("Unexpected operator in CNF".into()),
         }
+    }
+
+    // TODO Flatten all in one function or even in cnf directly
+    pub fn flatten_and(&self) -> Self {
+        fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
+            match node {
+                BooleanTree::And(left, right) => {
+                    let mut clauses = Vec::<BooleanTree>::new();
+                    clauses.extend(collect_clauses(left));
+                    clauses.extend(collect_clauses(right));
+                    clauses
+                }
+                _ => vec![node.clone()],
+            }
+        }
+
+        let mut iter = collect_clauses(self).into_iter().rev();
+        let last = iter.next().expect("CNF must have at least one clause");
+
+        iter.fold(last, |acc, clause| {
+            BooleanTree::And(boxed!(clause), boxed!(acc))
+        })
+    }
+
+    pub fn flatten_or(&self) -> Self {
+        fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
+            match node {
+                BooleanTree::Or(left, right) => {
+                    let mut clauses = Vec::<BooleanTree>::new();
+                    clauses.extend(collect_clauses(left));
+                    clauses.extend(collect_clauses(right));
+                    clauses
+                }
+                _ => vec![node.clone()],
+            }
+        }
+
+        let mut iter = collect_clauses(self).into_iter().rev();
+        let last = iter.next().expect("CNF must have at least one clause");
+
+        iter.fold(last, |acc, clause| {
+            BooleanTree::Or(boxed!(clause), boxed!(acc))
+        })
     }
 }
 
