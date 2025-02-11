@@ -13,8 +13,6 @@ fn conjunctive_normal_form(formula: &str) -> String {
         .nnf() // TODO can we do everything in cnf directly ?
         .cnf()
         .unwrap() // Should always be ok thanks to nnf
-        .flatten_and()
-        .flatten_or()
         .rpn_formula()
 }
 
@@ -70,12 +68,7 @@ mod tests {
         ]
         .iter()
         .for_each(|&(formula, cnf)| {
-            println!(
-                "CNF got='{}' expected='{}'",
-                conjunctive_normal_form(formula),
-                cnf
-            );
-            // assert_eq!(conjunctive_normal_form(formula), cnf);
+            assert_eq!(conjunctive_normal_form(formula), cnf);
         });
     }
 

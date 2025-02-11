@@ -130,17 +130,16 @@ impl BooleanTree {
 
         match self {
             Value(_) | Variable(_) | Not(_) => Ok(self.clone()),
-            And(left, right) => Ok(And(boxed!(left.cnf()?), boxed!(right.cnf()?))), // skipping
+            And(left, right) => Ok(And(boxed!(left.cnf()?), boxed!(right.cnf()?)).flatten_and()),
             Or(left, right) => {
                 let left = left.cnf()?;
                 let right = right.cnf()?;
                 match (&left, &right) {
-                    // TODO Maybe must separate cases
                     (a, And(b, c)) | (And(b, c), a) => Ok(And(
-                        boxed!(Or(boxed!(a.clone()), boxed!((**b).clone()))), // ugly
-                        boxed!(Or(boxed!(a.clone()), boxed!((**c).clone()))),
+                        boxed!(Or(boxed!(a.clone()), boxed!((**b).clone())).flatten_or()),
+                        boxed!(Or(boxed!(a.clone()), boxed!((**c).clone())).flatten_or()),
                     )),
-                    _ => Ok(Or(boxed!(left), boxed!(right))),
+                    _ => Ok(Or(boxed!(left), boxed!(right)).flatten_or()),
                 }
             }
             _ => Err("Unexpected operator in CNF".into()),
@@ -148,15 +147,13 @@ impl BooleanTree {
     }
 
     // TODO Flatten all in one function or even in cnf directly
-    pub fn flatten_and(&self) -> Self {
+    fn flatten_and(&self) -> Self {
         fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
             match node {
-                BooleanTree::And(left, right) => {
-                    let mut clauses = Vec::<BooleanTree>::new();
-                    clauses.extend(collect_clauses(left));
-                    clauses.extend(collect_clauses(right));
-                    clauses
-                }
+                BooleanTree::And(left, right) => collect_clauses(left)
+                    .into_iter()
+                    .chain(collect_clauses(right).into_iter())
+                    .collect::<Vec<BooleanTree>>(),
                 _ => vec![node.clone()],
             }
         }
@@ -169,15 +166,13 @@ impl BooleanTree {
         })
     }
 
-    pub fn flatten_or(&self) -> Self {
+    fn flatten_or(&self) -> Self {
         fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
             match node {
-                BooleanTree::Or(left, right) => {
-                    let mut clauses = Vec::<BooleanTree>::new();
-                    clauses.extend(collect_clauses(left));
-                    clauses.extend(collect_clauses(right));
-                    clauses
-                }
+                BooleanTree::Or(left, right) => collect_clauses(left)
+                    .into_iter()
+                    .chain(collect_clauses(right).into_iter())
+                    .collect::<Vec<BooleanTree>>(),
                 _ => vec![node.clone()],
             }
         }
