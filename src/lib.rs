@@ -145,46 +145,39 @@ impl BooleanTree {
             _ => Err("Unexpected operator in CNF".into()),
         }
     }
-
-    // TODO Flatten all in one function or even in cnf directly
-    fn flatten_and(&self) -> Self {
-        fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
-            match node {
-                BooleanTree::And(left, right) => collect_clauses(left)
-                    .into_iter()
-                    .chain(collect_clauses(right).into_iter())
-                    .collect::<Vec<BooleanTree>>(),
-                _ => vec![node.clone()],
-            }
-        }
-
-        let mut iter = collect_clauses(self).into_iter().rev();
-        let last = iter.next().expect("CNF must have at least one clause");
-
-        iter.fold(last, |acc, clause| {
-            BooleanTree::And(boxed!(clause), boxed!(acc))
-        })
-    }
-
-    fn flatten_or(&self) -> Self {
-        fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
-            match node {
-                BooleanTree::Or(left, right) => collect_clauses(left)
-                    .into_iter()
-                    .chain(collect_clauses(right).into_iter())
-                    .collect::<Vec<BooleanTree>>(),
-                _ => vec![node.clone()],
-            }
-        }
-
-        let mut iter = collect_clauses(self).into_iter().rev();
-        let last = iter.next().expect("CNF must have at least one clause");
-
-        iter.fold(last, |acc, clause| {
-            BooleanTree::Or(boxed!(clause), boxed!(acc))
-        })
-    }
 }
+
+macro_rules! impl_flatten {
+    ($fn_name:ident, $tree_variant:ident) => {
+        impl BooleanTree {
+            fn $fn_name(&self) -> Self {
+                // Helper function to collect clauses recursively.
+                fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
+                    match node {
+                        BooleanTree::$tree_variant(left, right) => collect_clauses(left)
+                            .into_iter()
+                            .chain(collect_clauses(right).into_iter())
+                            .collect::<Vec<_>>(),
+                        _ => vec![node.clone()],
+                    }
+                }
+
+                let mut iter = collect_clauses(self).into_iter().rev();
+                let last = iter.next().expect(concat!(
+                    stringify!($tree_variant),
+                    " must have at least one clause"
+                ));
+
+                iter.fold(last, |acc, clause| {
+                    BooleanTree::$tree_variant(boxed!(clause), boxed!(acc))
+                })
+            }
+        }
+    };
+}
+
+impl_flatten!(flatten_and, And);
+impl_flatten!(flatten_or, Or);
 
 // TODO
 
