@@ -124,7 +124,6 @@ impl BooleanTree {
         }
     }
 
-    // TODO check
     pub fn cnf(&self) -> Result<Self, String> {
         use BooleanTree::*;
 
@@ -138,7 +137,8 @@ impl BooleanTree {
                     (a, And(b, c)) | (And(b, c), a) => Ok(And(
                         boxed!(Or(boxed!(a.clone()), boxed!((**b).clone())).flatten_or()),
                         boxed!(Or(boxed!(a.clone()), boxed!((**c).clone())).flatten_or()),
-                    )),
+                    )
+                    .cnf()?),
                     _ => Ok(Or(boxed!(left), boxed!(right)).flatten_or()),
                 }
             }
@@ -151,13 +151,12 @@ macro_rules! impl_flatten {
     ($fn_name:ident, $tree_variant:ident) => {
         impl BooleanTree {
             fn $fn_name(&self) -> Self {
-                // Helper function to collect clauses recursively.
                 fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
                     match node {
                         BooleanTree::$tree_variant(left, right) => collect_clauses(left)
                             .into_iter()
                             .chain(collect_clauses(right).into_iter())
-                            .collect::<Vec<_>>(),
+                            .collect(),
                         _ => vec![node.clone()],
                     }
                 }

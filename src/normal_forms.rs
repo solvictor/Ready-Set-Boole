@@ -72,23 +72,28 @@ mod tests {
         });
     }
 
-    // TODO Add tests
-    // #[test]
-    // fn test_cnf() {
-    //     [
-    //         // ("AB^", "A!B&AB!&|"),
-    //         // ("AB^!", "AB!|A!B|&"),
-    //         // ("AB>!", "AB!&"),
-    //         // ("AB=!", "AB|A!B!|&"),
-    //         // ("A!B!|", "A!B!|"),
-    //         // ("AB|", "AB|"),
-    //         // ("AB|!", "A!B!&"),
-    //         // ("AB!!&", "AB&"),
-    //         // ("AB!!!&", "AB!&"),
-    //     ]
-    //     .iter()
-    //     .for_each(|&(formula, cnf)| {
-    //         assert_eq!(conjunctive_normal_form(formula), cnf);
-    //     });
-    // }
+    #[test]
+    fn test_cnf() {
+        [
+            ("A", "A"),
+            ("A!", "A!"),
+            ("A!!", "A"),
+            ("AB&", "AB&"),
+            ("ABC|&", "ABC|&"),     // (A & (B | C)) is already in CNF
+            ("AB|CD|&", "AB|CD|&"), // (A | B) & (C | D) is already in CNF
+            ("ABC||", "ABC||"),     // A clause with multiple disjuncts
+            // Distribution examples:
+            // (A | (B & C)) becomes (A | B) & (A | C)
+            ("ABC&|", "AB|AC|&"),
+            // ((A & B) | (C & D)) becomes (A | C) & (A | D) & (B | C) & (B | D)
+            ("AB&CD&|", "CA|CB|DA|DB|&&&"),
+            // Negation of a nested expression:
+            // !(A & (B | C)) = !A | !(B | C) = !A | (!B & !C) and after distribution: (!A | !B) & (!A | !C)
+            ("ABC|&!", "A!B!|A!C!|&"),
+        ]
+        .iter()
+        .for_each(|&(formula, cnf)| {
+            assert_eq!(conjunctive_normal_form(formula), cnf);
+        });
+    }
 }
