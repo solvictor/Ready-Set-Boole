@@ -28,6 +28,7 @@ pub enum BooleanTree {
     Equivalence(Box<BooleanTree>, Box<BooleanTree>),
 }
 
+// TODO Compile time differentiation between NNF and Unchecked
 impl BooleanTree {
     pub fn evaluate(&self, state: Option<&HashMap<char, bool>>) -> Result<bool, String> {
         use BooleanTree::*;
@@ -124,6 +125,7 @@ impl BooleanTree {
         }
     }
 
+    // TODO Revoir
     pub fn cnf(&self) -> Result<Self, String> {
         use BooleanTree::*;
 
@@ -144,6 +146,56 @@ impl BooleanTree {
             }
             _ => Err("Unexpected operator in CNF".into()),
         }
+    }
+
+    // TODO use DPLL algorithm
+    pub fn is_sat(&self) -> bool {
+        todo!();
+        fn solve(tree: &BooleanTree, state: &mut HashMap<char, bool>) -> Result<bool, String> {
+            if tree.evaluate(Some(state))? {
+                Ok(true)
+            } else {
+                Err("".into())
+            }
+        }
+
+        let tree = self.cnf().unwrap();
+
+        let mut variables: HashMap<char, bool> =
+            self.get_variables().iter().map(|x| (*x, false)).collect();
+
+        solve(&tree, &mut variables).unwrap()
+    }
+
+    pub fn get_variables(&self) -> Vec<char> {
+        use BooleanTree::*;
+
+        let mut variables = Vec::new();
+
+        let mut queue = VecDeque::from([self]);
+
+        while !queue.is_empty() {
+            let cur = queue.pop_front().unwrap();
+            match cur {
+                Variable(var) => {
+                    variables.push(*var);
+                }
+                Not(sub) => {
+                    queue.push_back(sub);
+                }
+                And(left, right)
+                | Or(left, right)
+                | Xor(left, right)
+                | Implication(left, right)
+                | Equivalence(left, right) => {
+                    queue.push_back(left);
+                    queue.push_back(right);
+                }
+                _ => {}
+            }
+        }
+
+        variables
     }
 }
 

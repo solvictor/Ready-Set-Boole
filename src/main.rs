@@ -5,6 +5,7 @@ mod eval;
 mod gray_code;
 mod normal_forms;
 mod operators;
+mod sat;
 
 // TODO Time and space complexity for each exercice
 
