@@ -10,35 +10,33 @@ pub fn print_truth_table(formula: &str) {
         }
     };
 
-    let variables: u32 = formula
-        .chars()
-        .filter_map(|c| c.is_uppercase().then(|| 1 << (c as usize - 65)))
-        .fold(0, |acc, i| acc | i);
+    let variables = tree.get_variables();
 
-    let n = variables.count_ones();
+    let n = variables.len();
 
     // Header
     println!(
         "{}| = |",
-        ('A'..='Z')
-            .filter_map(|l| (variables & (1 << (l as u8 - 65)) != 0).then(|| format!("| {} ", l)))
-            .collect::<String>()
+        variables
+            .iter()
+            .map(|name| format!("| {} ", name))
+            .collect::<String>(),
     );
 
     println!("{}|---|", "|---".repeat(n as usize));
 
     // Values
     for state in 0u32..1 << n {
-        let variables_state = ('A'..='Z')
-            .filter(|&name| variables & (1 << (name as u8 - 65)) != 0)
+        let variables_state = variables
+            .iter()
             .enumerate()
-            .map(|(i, name)| (name, state & (1 << (n - i as u32 - 1)) != 0))
+            .map(|(i, name)| (*name, state & (1 << (n - i - 1)) != 0))
             .collect::<HashMap<char, bool>>();
         println!(
             "{}| {} |",
-            ('A'..='Z')
-                .filter_map(|name| (variables & (1 << (name as u8 - 65)) != 0)
-                    .then(|| format!("| {} ", variables_state[&name] as u8)))
+            variables
+                .iter()
+                .map(|name| format!("| {} ", variables_state[name] as u8))
                 .collect::<String>(),
             tree.evaluate(Some(&variables_state)).unwrap() as u8
         );

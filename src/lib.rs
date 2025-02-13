@@ -167,10 +167,11 @@ impl BooleanTree {
         solve(&tree, &mut variables).unwrap()
     }
 
+    // Get variables of the formula in alphabetical order
     pub fn get_variables(&self) -> Vec<char> {
         use BooleanTree::*;
 
-        let mut variables = Vec::new();
+        let mut variables = 0u32;
 
         let mut queue = VecDeque::from([self]);
 
@@ -178,7 +179,7 @@ impl BooleanTree {
             let cur = queue.pop_front().unwrap();
             match cur {
                 Variable(var) => {
-                    variables.push(*var);
+                    variables |= 1 << (*var as u8 - 65);
                 }
                 Not(sub) => {
                     queue.push_back(sub);
@@ -195,7 +196,9 @@ impl BooleanTree {
             }
         }
 
-        variables
+        ('A'..='Z')
+            .filter(|&l| variables & (1 << (l as u8 - 65)) != 0)
+            .collect()
     }
 }
 
