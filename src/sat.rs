@@ -23,29 +23,35 @@ mod tests {
             assert_eq!(sat(formula), is_sat);
         });
     }
-    /*
-    (A | B) & (A | C | D)
-    ()
 
-         */
-
-    // TODO
-    // #[test]
-    // fn test_sat() {
-    //     [
-    //         ("AB^", "A!B&AB!&|"),
-    //         ("AB^!", "AB!|A!B|&"),
-    //         ("AB>!", "AB!&"),
-    //         ("AB=!", "AB|A!B!|&"),
-    //         ("A!B!|", "A!B!|"),
-    //         ("AB|", "AB|"),
-    //         ("AB|!", "A!B!&"),
-    //         ("AB!!&", "AB&"),
-    //         ("AB!!!&", "AB!&"),
-    //     ]
-    //     .iter()
-    //     .for_each(|&(formula, nnf)| {
-    //         assert_eq!(negation_normal_form(formula), nnf);
-    //     });
-    // }
+    #[test]
+    fn test_sat() {
+        [
+            ("A", true),
+            ("A!", true),
+            ("A!!", true),
+            ("A!A=", false),
+            ("A!A&", false),
+            ("A!A|", true),
+            ("AB=", true),
+            ("AB&C|", true),
+            ("AB|C!&", true),
+            ("AB&AB&!&", false),
+            ("AB&AB&=", true),
+            ("ABC&&", true),
+            ("A!A&!", true),
+            ("A!B!&", true),
+            ("A!B=", true),
+            ("AA=", true),
+            ("AB|!", true),
+            ("ABC|&", true),
+            ("ABC!|&", true),
+            ("AA!&BB!&|", false),
+            ("AB&CD&|", true),
+        ]
+        .iter()
+        .for_each(|&(formula, is_sat)| {
+            assert_eq!(sat(formula), is_sat);
+        });
+    }
 }

@@ -150,7 +150,7 @@ impl BooleanTree {
 
     // TODO use DPLL or CDCL algorithm
     pub fn is_sat(&self) -> bool {
-        fn dpll(
+        fn backtrack(
             tree: &BooleanTree,
             i: usize,
             variables: &Vec<char>,
@@ -159,11 +159,11 @@ impl BooleanTree {
             if i == variables.len() {
                 return Ok(tree.evaluate(Some(state))?);
             }
-            if dpll(tree, i + 1, variables, state)? {
+            if backtrack(tree, i + 1, variables, state)? {
                 return Ok(true);
             }
             state.insert(variables[i], false);
-            return dpll(tree, i + 1, variables, state);
+            return backtrack(tree, i + 1, variables, state);
         }
 
         let tree = self.nnf().cnf().unwrap();
@@ -173,7 +173,7 @@ impl BooleanTree {
         let mut variables_state: HashMap<char, bool> =
             variables.iter().map(|x| (*x, true)).collect();
 
-        dpll(&tree, 0, &variables, &mut variables_state).unwrap()
+        backtrack(&tree, 0, &variables, &mut variables_state).unwrap()
     }
 
     // Get variables of the formula in alphabetical order
