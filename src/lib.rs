@@ -148,27 +148,36 @@ impl BooleanTree {
         }
     }
 
-    // TODO use DPLL algorithm
+    // TODO use DPLL or CDCL algorithm
     pub fn is_sat(&self) -> bool {
-        todo!();
-        fn solve(tree: &BooleanTree, state: &mut HashMap<char, bool>) -> Result<bool, String> {
-            if tree.evaluate(Some(state))? {
-                Ok(true)
-            } else {
-                Err("".into())
+        fn dpll(
+            tree: &BooleanTree,
+            i: usize,
+            variables: &Vec<char>,
+            state: &mut HashMap<char, bool>,
+        ) -> Result<bool, String> {
+            if i == variables.len() {
+                return Ok(tree.evaluate(Some(state))?);
             }
+            if dpll(tree, i + 1, variables, state)? {
+                return Ok(true);
+            }
+            state.insert(variables[i], false);
+            return dpll(tree, i + 1, variables, state);
         }
 
-        let tree = self.cnf().unwrap();
+        let tree = self.nnf().cnf().unwrap();
 
-        let mut variables: HashMap<char, bool> =
-            self.get_variables().iter().map(|x| (*x, false)).collect();
+        let variables = self.variables();
 
-        solve(&tree, &mut variables).unwrap()
+        let mut variables_state: HashMap<char, bool> =
+            variables.iter().map(|x| (*x, true)).collect();
+
+        dpll(&tree, 0, &variables, &mut variables_state).unwrap()
     }
 
     // Get variables of the formula in alphabetical order
-    pub fn get_variables(&self) -> Vec<char> {
+    pub fn variables(&self) -> Vec<char> {
         use BooleanTree::*;
 
         let mut variables = 0u32;

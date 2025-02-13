@@ -10,7 +10,7 @@ pub fn print_truth_table(formula: &str) {
         }
     };
 
-    let variables = tree.get_variables();
+    let variables = tree.variables();
 
     let n = variables.len();
 
