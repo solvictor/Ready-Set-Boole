@@ -276,7 +276,6 @@ impl Display for BooleanTree {
 impl TryFrom<&str> for BooleanTree {
     type Error = String;
 
-    // TODO Ignore whitespaces ?
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
         let mut stack = VecDeque::<BooleanTree>::new();
 
@@ -286,10 +285,11 @@ impl TryFrom<&str> for BooleanTree {
                     stack.push_back(Self::Value(c == '1'));
                     continue;
                 }
-                ('A'..='Z') => {
+                'A'..='Z' => {
                     stack.push_back(Self::Variable(c));
                     continue;
                 }
+                ' ' => continue,
                 _ => {}
             }
             let q = stack
