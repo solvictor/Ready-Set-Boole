@@ -17,19 +17,56 @@ macro_rules! boxed {
 }
 
 #[derive(Clone, Debug)]
-pub enum BooleanTree {
-    Value(bool),
+pub enum BooleanTree<T> {
+    Value(T),
     Variable(char),
-    Not(Box<BooleanTree>),
-    And(Box<BooleanTree>, Box<BooleanTree>),
-    Or(Box<BooleanTree>, Box<BooleanTree>),
-    Xor(Box<BooleanTree>, Box<BooleanTree>),
-    Implication(Box<BooleanTree>, Box<BooleanTree>),
-    Equivalence(Box<BooleanTree>, Box<BooleanTree>),
+    Not(Box<BooleanTree<T>>),
+    And(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
+    Or(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
+    Xor(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
+    Implication(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
+    Equivalence(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
 }
 
+// TODO More abstraction
 // TODO Compile time differentiation between NNF and Unchecked
-impl BooleanTree {
+impl<T> BooleanTree<T> {
+    // Get variables of the formula in alphabetical order
+    pub fn variables(&self) -> Vec<char> {
+        use BooleanTree::*;
+
+        let mut variables = 0u32;
+
+        let mut queue = VecDeque::from([self]);
+
+        while !queue.is_empty() {
+            let cur = queue.pop_front().unwrap();
+            match cur {
+                Variable(var) => {
+                    variables |= 1 << (*var as u8 - 65);
+                }
+                Not(sub) => {
+                    queue.push_back(sub);
+                }
+                And(left, right)
+                | Or(left, right)
+                | Xor(left, right)
+                | Implication(left, right)
+                | Equivalence(left, right) => {
+                    queue.push_back(left);
+                    queue.push_back(right);
+                }
+                _ => {}
+            }
+        }
+
+        ('A'..='Z')
+            .filter(|&l| variables & (1 << (l as u8 - 65)) != 0)
+            .collect()
+    }
+}
+
+impl BooleanTree<bool> {
     pub fn evaluate(&self, state: Option<&HashMap<char, bool>>) -> Result<bool, String> {
         use BooleanTree::*;
 
@@ -64,30 +101,9 @@ impl BooleanTree {
         }
     }
 
-    pub fn as_char(&self) -> char {
-        use BooleanTree::*;
-
-        match self {
-            Value(val) => {
-                if *val {
-                    '⊤'
-                } else {
-                    '⊥'
-                }
-            }
-            Variable(var) => *var,
-            Not(_) => '¬',
-            And(_, _) => '∧',
-            Or(_, _) => '∨',
-            Xor(_, _) => '⊕',
-            Implication(_, _) => '⇒',
-            Equivalence(_, _) => '⇔',
-        }
-    }
-
     // TODO less clone ?
     // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
-    pub fn nnf(&self) -> BooleanTree {
+    pub fn nnf(&self) -> Self {
         use BooleanTree::*;
 
         match self {
@@ -151,7 +167,7 @@ impl BooleanTree {
     // TODO use DPLL or CDCL algorithm
     pub fn is_sat(&self) -> bool {
         fn backtrack(
-            tree: &BooleanTree,
+            tree: &BooleanTree<bool>,
             i: usize,
             variables: &Vec<char>,
             state: &mut HashMap<char, bool>,
@@ -176,46 +192,33 @@ impl BooleanTree {
         backtrack(&tree, 0, &variables, &mut variables_state).unwrap()
     }
 
-    // Get variables of the formula in alphabetical order
-    pub fn variables(&self) -> Vec<char> {
+    pub fn as_char(&self) -> char {
         use BooleanTree::*;
 
-        let mut variables = 0u32;
-
-        let mut queue = VecDeque::from([self]);
-
-        while !queue.is_empty() {
-            let cur = queue.pop_front().unwrap();
-            match cur {
-                Variable(var) => {
-                    variables |= 1 << (*var as u8 - 65);
+        match self {
+            Value(val) => {
+                if *val {
+                    '⊤'
+                } else {
+                    '⊥'
                 }
-                Not(sub) => {
-                    queue.push_back(sub);
-                }
-                And(left, right)
-                | Or(left, right)
-                | Xor(left, right)
-                | Implication(left, right)
-                | Equivalence(left, right) => {
-                    queue.push_back(left);
-                    queue.push_back(right);
-                }
-                _ => {}
             }
+            Variable(var) => *var,
+            Not(_) => '¬',
+            And(_, _) => '∧',
+            Or(_, _) => '∨',
+            Xor(_, _) => '⊕',
+            Implication(_, _) => '⇒',
+            Equivalence(_, _) => '⇔',
         }
-
-        ('A'..='Z')
-            .filter(|&l| variables & (1 << (l as u8 - 65)) != 0)
-            .collect()
     }
 }
 
 macro_rules! impl_flatten {
     ($fn_name:ident, $tree_variant:ident) => {
-        impl BooleanTree {
+        impl BooleanTree<bool> {
             fn $fn_name(&self) -> Self {
-                fn collect_clauses(node: &BooleanTree) -> Vec<BooleanTree> {
+                fn collect_clauses(node: &BooleanTree<bool>) -> Vec<BooleanTree<bool>> {
                     match node {
                         BooleanTree::$tree_variant(left, right) => collect_clauses(left)
                             .into_iter()
@@ -255,7 +258,7 @@ impl_flatten!(flatten_or, Or);
 
 
 */
-impl Display for BooleanTree {
+impl Display for BooleanTree<bool> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use BooleanTree::*;
 
@@ -273,11 +276,11 @@ impl Display for BooleanTree {
     }
 }
 
-impl TryFrom<&str> for BooleanTree {
+impl TryFrom<&str> for BooleanTree<bool> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
-        let mut stack = VecDeque::<BooleanTree>::new();
+        let mut stack = VecDeque::<BooleanTree<bool>>::new();
 
         for (i, c) in formula.char_indices() {
             match c {
@@ -336,7 +339,7 @@ mod tests {
         ]
         .iter()
         .for_each(|&formula| {
-            let tree = BooleanTree::try_from(formula).expect("Failed to parse formula");
+            let tree = BooleanTree::<bool>::try_from(formula).expect("Failed to parse formula");
             assert_eq!(formula, tree.rpn_formula().as_str());
         });
     }
