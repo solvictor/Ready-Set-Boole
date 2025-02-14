@@ -16,18 +16,6 @@ macro_rules! boxed {
     };
 }
 
-#[derive(Clone, Debug)]
-pub enum Tree<T> {
-    Value(T),
-    Variable(char),
-    Not(Box<Tree<T>>),
-    And(Box<Tree<T>>, Box<Tree<T>>),
-    Or(Box<Tree<T>>, Box<Tree<T>>),
-    Xor(Box<Tree<T>>, Box<Tree<T>>),
-    Implication(Box<Tree<T>>, Box<Tree<T>>),
-    Equivalence(Box<Tree<T>>, Box<Tree<T>>),
-}
-
 // TODO Better name
 pub trait Valid:
     std::ops::Not<Output = Self>
@@ -49,6 +37,18 @@ impl<
             + Clone,
     > Valid for T
 {
+}
+
+#[derive(Clone, Debug)]
+pub enum Tree<T: Valid> {
+    Value(T),
+    Variable(char),
+    Not(Box<Tree<T>>),
+    And(Box<Tree<T>>, Box<Tree<T>>),
+    Or(Box<Tree<T>>, Box<Tree<T>>),
+    Xor(Box<Tree<T>>, Box<Tree<T>>),
+    Implication(Box<Tree<T>>, Box<Tree<T>>),
+    Equivalence(Box<Tree<T>>, Box<Tree<T>>),
 }
 
 // TODO More abstraction
@@ -303,18 +303,19 @@ impl Display for Tree<bool> {
     }
 }
 
-impl TryFrom<&str> for Tree<bool> {
+impl<T: Valid> TryFrom<&str> for Tree<T> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
-        let mut stack = VecDeque::<Tree<bool>>::new();
+        let mut stack = VecDeque::<Tree<T>>::new();
 
         for (i, c) in formula.char_indices() {
             match c {
-                '0' | '1' => {
-                    stack.push_back(Self::Value(c == '1'));
-                    continue;
-                }
+                //
+                // '0' | '1' => {
+                //     stack.push_back(Self::Value(c == '1'));
+                //     continue;
+                // }
                 'A'..='Z' => {
                     stack.push_back(Self::Variable(c));
                     continue;
