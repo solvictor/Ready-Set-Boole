@@ -1,7 +1,7 @@
-use crate::BooleanTree;
+use crate::Tree;
 
 fn sat(formula: &str) -> bool {
-    BooleanTree::try_from(formula.to_uppercase().as_str())
+    Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
         .is_sat()
 }

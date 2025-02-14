@@ -17,23 +17,46 @@ macro_rules! boxed {
 }
 
 #[derive(Clone, Debug)]
-pub enum BooleanTree<T> {
+pub enum Tree<T> {
     Value(T),
     Variable(char),
-    Not(Box<BooleanTree<T>>),
-    And(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
-    Or(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
-    Xor(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
-    Implication(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
-    Equivalence(Box<BooleanTree<T>>, Box<BooleanTree<T>>),
+    Not(Box<Tree<T>>),
+    And(Box<Tree<T>>, Box<Tree<T>>),
+    Or(Box<Tree<T>>, Box<Tree<T>>),
+    Xor(Box<Tree<T>>, Box<Tree<T>>),
+    Implication(Box<Tree<T>>, Box<Tree<T>>),
+    Equivalence(Box<Tree<T>>, Box<Tree<T>>),
+}
+
+// TODO Better name
+pub trait Valid:
+    std::ops::Not<Output = Self>
+    + std::ops::BitAnd<Output = Self>
+    + std::ops::BitOr<Output = Self>
+    + std::ops::BitXor<Output = Self>
+    + std::cmp::PartialEq
+    + Clone
+{
+}
+
+// Weird but ok
+impl<
+        T: std::ops::Not<Output = Self>
+            + std::ops::BitAnd<Output = Self>
+            + std::ops::BitOr<Output = Self>
+            + std::ops::BitXor<Output = Self>
+            + std::cmp::PartialEq
+            + Clone,
+    > Valid for T
+{
 }
 
 // TODO More abstraction
 // TODO Compile time differentiation between NNF and Unchecked
-impl<T> BooleanTree<T> {
+impl<T: Valid> Tree<T> {
     // Get variables of the formula in alphabetical order
     pub fn variables(&self) -> Vec<char> {
-        use BooleanTree::*;
+        use Tree::*;
 
         let mut variables = 0u32;
 
@@ -64,47 +87,34 @@ impl<T> BooleanTree<T> {
             .filter(|&l| variables & (1 << (l as u8 - 65)) != 0)
             .collect()
     }
-}
 
-impl BooleanTree<bool> {
-    pub fn evaluate(&self, state: Option<&HashMap<char, bool>>) -> Result<bool, String> {
-        use BooleanTree::*;
+    pub fn evaluate(&self, state: Option<&HashMap<char, T>>) -> Result<T, String> {
+        use Tree::*;
 
         Ok(match self {
-            Value(val) => *val,
-            Variable(name) => *state
+            Value(val) => val.clone(),
+            Variable(name) => state
                 .ok_or("Missing state")?
                 .get(name)
-                .ok_or(&format!("Missing value for {} in state", name))?,
+                .ok_or(&format!("Missing value for {} in state", name))?
+                .clone(),
             Not(p) => !p.evaluate(state)?,
             And(p, q) => p.evaluate(state)? & q.evaluate(state)?,
             Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
             Xor(p, q) => p.evaluate(state)? ^ q.evaluate(state)?,
             Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
-            Equivalence(p, q) => p.evaluate(state)? == q.evaluate(state)?,
+            Equivalence(p, q) => {
+                let a = p.evaluate(state)?;
+                let b = q.evaluate(state)?;
+                (a.clone() & b.clone()) | (!a & !b)
+            }
         })
-    }
-
-    // LGTM
-    pub fn rpn_formula(&self) -> String {
-        use BooleanTree::*;
-
-        match self {
-            Value(val) => if *val { "1" } else { "0" }.to_string(),
-            Variable(var) => var.to_string(),
-            Not(sub) => sub.rpn_formula() + "!",
-            And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
-            Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
-            Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
-            Implication(left, right) => left.rpn_formula() + &right.rpn_formula() + ">",
-            Equivalence(left, right) => left.rpn_formula() + &right.rpn_formula() + "=",
-        }
     }
 
     // TODO less clone ?
     // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
     pub fn nnf(&self) -> Self {
-        use BooleanTree::*;
+        use Tree::*;
 
         match self {
             Value(_) | Variable(_) => self.clone(),
@@ -143,7 +153,7 @@ impl BooleanTree<bool> {
 
     // TODO Revoir
     pub fn cnf(&self) -> Result<Self, String> {
-        use BooleanTree::*;
+        use Tree::*;
 
         match self {
             Value(_) | Variable(_) | Not(_) => Ok(self.clone()),
@@ -163,11 +173,29 @@ impl BooleanTree<bool> {
             _ => Err("Unexpected operator in CNF".into()),
         }
     }
+}
+
+impl Tree<bool> {
+    // LGTM
+    pub fn rpn_formula(&self) -> String {
+        use Tree::*;
+
+        match self {
+            Value(val) => if *val { "1" } else { "0" }.to_string(),
+            Variable(var) => var.to_string(),
+            Not(sub) => sub.rpn_formula() + "!",
+            And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
+            Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
+            Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
+            Implication(left, right) => left.rpn_formula() + &right.rpn_formula() + ">",
+            Equivalence(left, right) => left.rpn_formula() + &right.rpn_formula() + "=",
+        }
+    }
 
     // TODO use DPLL or CDCL algorithm
     pub fn is_sat(&self) -> bool {
         fn backtrack(
-            tree: &BooleanTree<bool>,
+            tree: &Tree<bool>,
             i: usize,
             variables: &Vec<char>,
             state: &mut HashMap<char, bool>,
@@ -193,7 +221,7 @@ impl BooleanTree<bool> {
     }
 
     pub fn as_char(&self) -> char {
-        use BooleanTree::*;
+        use Tree::*;
 
         match self {
             Value(val) => {
@@ -216,11 +244,11 @@ impl BooleanTree<bool> {
 
 macro_rules! impl_flatten {
     ($fn_name:ident, $tree_variant:ident) => {
-        impl BooleanTree<bool> {
+        impl<T: Valid> Tree<T> {
             fn $fn_name(&self) -> Self {
-                fn collect_clauses(node: &BooleanTree<bool>) -> Vec<BooleanTree<bool>> {
+                fn collect_clauses<T: Valid>(node: &Tree<T>) -> Vec<Tree<T>> {
                     match node {
-                        BooleanTree::$tree_variant(left, right) => collect_clauses(left)
+                        Tree::$tree_variant(left, right) => collect_clauses(left)
                             .into_iter()
                             .chain(collect_clauses(right).into_iter())
                             .collect(),
@@ -235,7 +263,7 @@ macro_rules! impl_flatten {
                 ));
 
                 iter.fold(last, |acc, clause| {
-                    BooleanTree::$tree_variant(boxed!(clause), boxed!(acc))
+                    Tree::$tree_variant(boxed!(clause), boxed!(acc))
                 })
             }
         }
@@ -245,8 +273,7 @@ macro_rules! impl_flatten {
 impl_flatten!(flatten_and, And);
 impl_flatten!(flatten_or, Or);
 
-// TODO
-
+// TODO Add display for any type that can be displayed but keep bool with as_char
 /*
 101|& should give
 
@@ -258,9 +285,9 @@ impl_flatten!(flatten_or, Or);
 
 
 */
-impl Display for BooleanTree<bool> {
+impl Display for Tree<bool> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use BooleanTree::*;
+        use Tree::*;
 
         match self {
             Value(_) | Variable(_) => write!(f, "{}", self.as_char()),
@@ -276,11 +303,11 @@ impl Display for BooleanTree<bool> {
     }
 }
 
-impl TryFrom<&str> for BooleanTree<bool> {
+impl TryFrom<&str> for Tree<bool> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
-        let mut stack = VecDeque::<BooleanTree<bool>>::new();
+        let mut stack = VecDeque::<Tree<bool>>::new();
 
         for (i, c) in formula.char_indices() {
             match c {
@@ -339,7 +366,7 @@ mod tests {
         ]
         .iter()
         .for_each(|&formula| {
-            let tree = BooleanTree::<bool>::try_from(formula).expect("Failed to parse formula");
+            let tree = Tree::<bool>::try_from(formula).expect("Failed to parse formula");
             assert_eq!(formula, tree.rpn_formula().as_str());
         });
     }

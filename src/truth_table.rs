@@ -1,8 +1,8 @@
-use crate::BooleanTree;
+use crate::Tree;
 use std::collections::HashMap;
 
 pub fn print_truth_table(formula: &str) {
-    let tree = match BooleanTree::try_from(formula.to_uppercase().as_str()) {
+    let tree = match Tree::try_from(formula.to_uppercase().as_str()) {
         Ok(tree) => tree,
         Err(e) => {
             eprintln!("Invalid formula '{}': {}", formula, e);

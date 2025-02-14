@@ -1,4 +1,4 @@
-use ready_set_boole::BooleanTree;
+use ready_set_boole::Tree;
 
 fn powerset(set: Vec<i32>) -> Vec<Vec<i32>> {
     let mut res = vec![];
@@ -17,7 +17,7 @@ fn powerset(set: Vec<i32>) -> Vec<Vec<i32>> {
 }
 
 fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
-    let tree = BooleanTree::try_from(formula.to_uppercase().as_str())
+    let tree = Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula));
     // tree.evaluate(state)
     // TODO Make tree of any kind (bool or set)

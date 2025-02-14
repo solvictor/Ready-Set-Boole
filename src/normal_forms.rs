@@ -1,14 +1,14 @@
-use crate::BooleanTree;
+use crate::Tree;
 
 fn negation_normal_form(formula: &str) -> String {
-    BooleanTree::try_from(formula.to_uppercase().as_str())
+    Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
         .nnf()
         .rpn_formula()
 }
 
 fn conjunctive_normal_form(formula: &str) -> String {
-    BooleanTree::try_from(formula.to_uppercase().as_str())
+    Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
         .nnf() // TODO can we do everything in cnf directly ?
         .cnf()

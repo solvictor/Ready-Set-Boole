@@ -1,4 +1,4 @@
-use ready_set_boole::BooleanTree;
+use ready_set_boole::Tree;
 use std::collections::HashMap;
 
 mod eval;
@@ -11,7 +11,7 @@ mod sets;
 // TODO Time and space complexity for each exercice
 
 fn main() {
-    let tree = BooleanTree::try_from("101A|&!^");
+    let tree = Tree::try_from("101A|&!^");
     println!("{:?}", tree);
 
     let tree = tree.unwrap();
