@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::Tree;
+use crate::{MyHashSet, Tree};
 
 pub fn eval_formula(formula: &str) -> bool {
     Tree::try_from(formula.to_uppercase().as_str())
@@ -11,9 +11,9 @@ pub fn eval_formula(formula: &str) -> bool {
 
 fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
     // TODO make hashset that satisfies Valid trait
-    let tree: Tree<HashSet<i32>> = Tree::try_from(formula.to_uppercase().as_str())
+    let tree: Tree<MyHashSet<i32>> = Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula));
-    let state: HashMap<char, HashSet<i32>> = sets
+    let state: HashMap<char, MyHashSet<i32>> = sets
         .iter()
         .enumerate()
         .map(|(i, set)| ((65 + i as u8) as char, set.clone().into_iter().collect()))

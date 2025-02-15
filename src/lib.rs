@@ -1,6 +1,8 @@
+use std::ops::{BitAnd, BitOr, BitXor, Not};
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
+    hash::Hash,
 };
 
 pub mod eval;
@@ -14,6 +16,61 @@ macro_rules! boxed {
     ($a:expr) => {
         Box::new($a)
     };
+}
+
+#[derive(Clone, Debug)]
+pub struct MyHashSet<T: Eq + Hash>(HashSet<T>);
+
+impl<T: Eq + Hash> MyHashSet<T> {
+    pub fn new() -> Self {
+        MyHashSet(HashSet::new())
+    }
+}
+
+impl<T: Eq + Hash + Clone> Not for MyHashSet<T> {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        unimplemented!("Define set complement as needed")
+    }
+}
+
+impl<T: Eq + Hash + Clone> BitAnd for MyHashSet<T> {
+    type Output = Self;
+    fn bitand(self, rhs: Self) -> Self::Output {
+        let set = self.0.intersection(&rhs.0).cloned().collect();
+        MyHashSet(set)
+    }
+}
+
+impl<T: Eq + Hash + Clone> BitOr for MyHashSet<T> {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        let set = self.0.union(&rhs.0).cloned().collect();
+        MyHashSet(set)
+    }
+}
+
+impl<T: Eq + Hash + Clone> BitXor for MyHashSet<T> {
+    type Output = Self;
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        let set = self.0.symmetric_difference(&rhs.0).cloned().collect();
+        MyHashSet(set)
+    }
+}
+
+impl<T: Eq + Hash> IntoIterator for MyHashSet<T> {
+    type Item = T;
+    type IntoIter = std::collections::hash_set::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<T: Eq + Hash> FromIterator<T> for MyHashSet<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        MyHashSet(HashSet::from_iter(iter))
+    }
 }
 
 // TODO Better name
@@ -311,7 +368,7 @@ impl<T: Valid> TryFrom<&str> for Tree<T> {
 
         for (i, c) in formula.char_indices() {
             match c {
-                //
+                // TODO Must work for bool
                 // '0' | '1' => {
                 //     stack.push_back(Self::Value(c == '1'));
                 //     continue;
@@ -327,18 +384,18 @@ impl<T: Valid> TryFrom<&str> for Tree<T> {
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             if c == '!' {
-                stack.push_back(Self::Not(Box::new(q)));
+                stack.push_back(Self::Not(boxed!(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             stack.push_back(match c {
-                '&' => Self::And(Box::new(p), Box::new(q)),
-                '|' => Self::Or(Box::new(p), Box::new(q)),
-                '^' => Self::Xor(Box::new(p), Box::new(q)),
-                '>' => Self::Implication(Box::new(p), Box::new(q)),
-                '=' => Self::Equivalence(Box::new(p), Box::new(q)),
+                '&' => Self::And(boxed!(p), boxed!(q)),
+                '|' => Self::Or(boxed!(p), boxed!(q)),
+                '^' => Self::Xor(boxed!(p), boxed!(q)),
+                '>' => Self::Implication(boxed!(p), boxed!(q)),
+                '=' => Self::Equivalence(boxed!(p), boxed!(q)),
                 _ => return Err(format!("Invalid character '{}'", c)),
             });
         }
