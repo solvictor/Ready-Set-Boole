@@ -1,15 +1,8 @@
-use std::ops::{BitAnd, BitOr, BitXor, Not};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, VecDeque},
     fmt::Display,
-    hash::Hash,
+    sync::Arc,
 };
-
-pub mod eval;
-pub mod gray_code;
-pub mod normal_forms;
-pub mod operators;
-pub mod truth_table;
 
 #[macro_export]
 macro_rules! boxed {
@@ -18,58 +11,79 @@ macro_rules! boxed {
     };
 }
 
-#[derive(Clone, Debug)]
-pub struct MyHashSet<T: Eq + Hash>(HashSet<T>);
+use std::collections::HashSet;
+use std::hash::Hash;
+use std::ops::{BitAnd, BitOr, BitXor, Not};
 
-impl<T: Eq + Hash> MyHashSet<T> {
-    pub fn new() -> Self {
-        MyHashSet(HashSet::new())
-    }
+// TODO Maybe too much abstraction with this and Tree<T>
+#[derive(Clone, PartialEq, Debug)]
+pub struct Set<T: Eq + Hash> {
+    data: HashSet<T>,
+    universal: Option<Arc<HashSet<T>>>,
 }
 
-impl<T: Eq + Hash + Clone> Not for MyHashSet<T> {
+impl<T: Eq + Hash + Clone> BitXor for Set<T> {
     type Output = Self;
-    fn not(self) -> Self::Output {
-        unimplemented!("Define set complement as needed")
-    }
-}
 
-impl<T: Eq + Hash + Clone> BitAnd for MyHashSet<T> {
-    type Output = Self;
-    fn bitand(self, rhs: Self) -> Self::Output {
-        let set = self.0.intersection(&rhs.0).cloned().collect();
-        MyHashSet(set)
-    }
-}
-
-impl<T: Eq + Hash + Clone> BitOr for MyHashSet<T> {
-    type Output = Self;
-    fn bitor(self, rhs: Self) -> Self::Output {
-        let set = self.0.union(&rhs.0).cloned().collect();
-        MyHashSet(set)
-    }
-}
-
-impl<T: Eq + Hash + Clone> BitXor for MyHashSet<T> {
-    type Output = Self;
     fn bitxor(self, rhs: Self) -> Self::Output {
-        let set = self.0.symmetric_difference(&rhs.0).cloned().collect();
-        MyHashSet(set)
+        Set {
+            data: &self.data ^ &rhs.data,
+            universal: self.universal,
+        }
     }
 }
 
-impl<T: Eq + Hash> IntoIterator for MyHashSet<T> {
+impl<T: Eq + Hash + Clone> BitOr for Set<T> {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Set {
+            data: &self.data | &rhs.data,
+            universal: self.universal,
+        }
+    }
+}
+
+impl<T: Eq + Hash + Clone> BitAnd for Set<T> {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Set {
+            data: &self.data & &rhs.data,
+            universal: self.universal,
+        }
+    }
+}
+
+impl<T: Eq + Hash + Clone> Not for Set<T> {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Set {
+            data: self
+                .universal
+                .clone()
+                .expect("Missing universal set")
+                .difference(&self.data)
+                .cloned()
+                .collect(),
+            universal: self.universal,
+        }
+    }
+}
+
+impl<T: Eq + Hash> Set<T> {
+    pub fn new(data: HashSet<T>, universal: Option<Arc<HashSet<T>>>) -> Self {
+        Set { data, universal }
+    }
+}
+
+impl<T: Eq + Hash> IntoIterator for Set<T> {
     type Item = T;
     type IntoIter = std::collections::hash_set::IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
-impl<T: Eq + Hash> FromIterator<T> for MyHashSet<T> {
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        MyHashSet(HashSet::from_iter(iter))
+        self.data.into_iter()
     }
 }
 
@@ -108,7 +122,7 @@ pub enum Tree<T: Valid> {
     Equivalence(Box<Tree<T>>, Box<Tree<T>>),
 }
 
-// TODO More abstraction
+// TODO More abstraction maybe less ?
 // TODO Compile time differentiation between NNF and Unchecked
 impl<T: Valid> Tree<T> {
     // Get variables of the formula in alphabetical order
@@ -145,6 +159,7 @@ impl<T: Valid> Tree<T> {
             .collect()
     }
 
+    // TODO May be invalid if we add a set without associated variable (TODO add a check everywhere and remove Option in evaluate? maybe even remove HashMap and use checked vec)
     pub fn evaluate(&self, state: Option<&HashMap<char, T>>) -> Result<T, String> {
         use Tree::*;
 
@@ -274,7 +289,7 @@ impl Tree<bool> {
         let mut variables_state: HashMap<char, bool> =
             variables.iter().map(|x| (*x, true)).collect();
 
-        backtrack(&tree, 0, &variables, &mut variables_state).unwrap()
+        backtrack(&tree, 0, &variables, &mut variables_state).expect("Sat check failed")
     }
 
     pub fn as_char(&self) -> char {

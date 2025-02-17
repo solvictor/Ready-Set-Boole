@@ -58,9 +58,9 @@ mod tests {
         ]
         .iter()
         .for_each(|(set, power)| {
-            assert!(powerset(set.clone())
-                .iter()
-                .all(|subset| power.contains(subset)));
+            let result = powerset(set.clone());
+            assert!(result.len() == power.len());
+            assert!(result.iter().all(|subset| power.contains(subset)));
         });
     }
 }

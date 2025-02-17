@@ -1,6 +1,8 @@
-use std::collections::{HashMap, HashSet};
-
-use crate::{MyHashSet, Tree};
+use ready_set_boole::{Set, Tree};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 pub fn eval_formula(formula: &str) -> bool {
     Tree::try_from(formula.to_uppercase().as_str())
@@ -9,19 +11,23 @@ pub fn eval_formula(formula: &str) -> bool {
         .expect(&format!("Invalid formula '{}'", formula))
 }
 
+// TODO Revoir l'evaluation
 fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
-    // TODO make hashset that satisfies Valid trait
-    let tree: Tree<MyHashSet<i32>> = Tree::try_from(formula.to_uppercase().as_str())
+    let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula));
-    let state: HashMap<char, MyHashSet<i32>> = sets
+
+    let universal: Arc<HashSet<i32>> = Arc::new(sets.iter().flatten().cloned().collect());
+    let state: HashMap<char, Set<i32>> = sets
         .iter()
         .enumerate()
-        .map(|(i, set)| ((65 + i as u8) as char, set.clone().into_iter().collect()))
+        .map(|(i, set)| {
+            let var = (65 + i as u8) as char;
+            let val = Set::new(set.clone().into_iter().collect(), Some(universal.clone()));
+            (var, val)
+        })
         .collect();
-    println!("{:?}", state);
-    // tree.evaluate(state)
-    // TODO Make tree of any kind (bool or set)
-    todo!()
+    let res = tree.evaluate(Some(&state));
+    res.expect("Failed to evaluate set").into_iter().collect()
 }
 
 #[cfg(test)]
@@ -67,7 +73,30 @@ mod tests {
         ]
         .iter()
         .for_each(|(formula, sets, res)| {
-            assert_eq!(eval_set(formula, sets.clone()), res.clone());
+            let result = eval_set(formula, sets.clone());
+            assert!(res.len() == result.len());
+            assert!(res.iter().all(|e| result.contains(e)));
+        });
+    }
+
+    #[test]
+    fn test_eval_set() {
+        [
+            ("A", vec![vec![0, 1, 2]], vec![0, 1, 2]),
+            ("AB&!", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![1, 2, 3, 4]),
+            ("AB|!", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![]),
+            ("AB^", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![1, 2, 3, 4]),
+            ("AB^!", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![0]),
+            ("AB>", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![0, 3, 4]),
+            ("AB>!", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![1, 2]),
+            ("AB=", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![0]),
+            ("AB=!", vec![vec![0, 1, 2], vec![0, 3, 4]], vec![1, 2, 3, 4]),
+        ]
+        .iter()
+        .for_each(|(formula, sets, res)| {
+            let result = eval_set(formula, sets.clone());
+            assert!(res.len() == result.len());
+            assert!(res.iter().all(|e| result.contains(e)));
         });
     }
 }
