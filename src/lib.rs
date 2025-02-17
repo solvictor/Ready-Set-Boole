@@ -13,7 +13,6 @@ macro_rules! boxed {
 
 use std::collections::HashSet;
 use std::hash::Hash;
-use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 // TODO Maybe too much abstraction with this and Tree<T>
 #[derive(Clone, PartialEq, Debug)]
@@ -22,7 +21,7 @@ pub struct Set<T: Eq + Hash> {
     universal: Option<Arc<HashSet<T>>>,
 }
 
-impl<T: Eq + Hash + Clone> BitXor for Set<T> {
+impl<T: Eq + Hash + Clone> std::ops::BitXor for Set<T> {
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
@@ -33,7 +32,7 @@ impl<T: Eq + Hash + Clone> BitXor for Set<T> {
     }
 }
 
-impl<T: Eq + Hash + Clone> BitOr for Set<T> {
+impl<T: Eq + Hash + Clone> std::ops::BitOr for Set<T> {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -44,7 +43,7 @@ impl<T: Eq + Hash + Clone> BitOr for Set<T> {
     }
 }
 
-impl<T: Eq + Hash + Clone> BitAnd for Set<T> {
+impl<T: Eq + Hash + Clone> std::ops::BitAnd for Set<T> {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -55,18 +54,12 @@ impl<T: Eq + Hash + Clone> BitAnd for Set<T> {
     }
 }
 
-impl<T: Eq + Hash + Clone> Not for Set<T> {
+impl<T: Eq + Hash + Clone> std::ops::Not for Set<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
         Set {
-            data: self
-                .universal
-                .clone()
-                .expect("Missing universal set")
-                .difference(&self.data)
-                .cloned()
-                .collect(),
+            data: &(*self.universal.clone().expect("Missing universal set")) - &self.data,
             universal: self.universal,
         }
     }
