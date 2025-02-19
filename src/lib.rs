@@ -116,15 +116,13 @@ pub enum Tree<T: Valid> {
     Equivalence(Box<Tree<T>>, Box<Tree<T>>),
 }
 
-pub struct BoolTree {
-    pub head: Tree<bool>,
-}
+pub struct BoolTree(Tree<bool>);
 
 impl std::ops::Deref for BoolTree {
     type Target = Tree<bool>;
 
     fn deref(&self) -> &Self::Target {
-        &self.head
+        &self.0
     }
 }
 
@@ -361,7 +359,6 @@ impl_flatten!(flatten_or, Or);
    / \
   0   1
 
-
 */
 impl Display for Tree<bool> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -465,9 +462,7 @@ impl TryFrom<&str> for BoolTree {
             });
         }
         match stack.len() {
-            1 => Ok(BoolTree {
-                head: stack.pop_front().unwrap(),
-            }),
+            1 => Ok(BoolTree(stack.pop_front().unwrap())),
             0 => Err("Empty formula".into()),
             2 => Err("Missing operator".into()),
             _ => Err("Missing operators".into()),
