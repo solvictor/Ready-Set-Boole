@@ -14,6 +14,7 @@ macro_rules! boxed {
 use std::collections::HashSet;
 use std::hash::Hash;
 
+// TODO Organize
 // TODO Maybe too much abstraction with this and Tree<T>
 #[derive(Clone, PartialEq, Debug)]
 pub struct Set<T: Eq + Hash> {
@@ -113,6 +114,18 @@ pub enum Tree<T: Valid> {
     Xor(Box<Tree<T>>, Box<Tree<T>>),
     Implication(Box<Tree<T>>, Box<Tree<T>>),
     Equivalence(Box<Tree<T>>, Box<Tree<T>>),
+}
+
+pub struct BoolTree {
+    pub head: Tree<bool>,
+}
+
+impl std::ops::Deref for BoolTree {
+    type Target = Tree<bool>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.head
+    }
 }
 
 // TODO More abstraction maybe less ?
@@ -356,7 +369,7 @@ impl Display for Tree<bool> {
 
         match self {
             Value(_) | Variable(_) => write!(f, "{}", self.as_char()),
-            Not(inner) => write!(f, "{}({})", self.as_char(), inner),
+            Not(sub) => write!(f, "{}({})", self.as_char(), sub),
             And(left, right)
             | Or(left, right)
             | Xor(left, right)
@@ -376,11 +389,6 @@ impl<T: Valid> TryFrom<&str> for Tree<T> {
 
         for (i, c) in formula.char_indices() {
             match c {
-                // TODO Must work for bool
-                // '0' | '1' => {
-                //     stack.push_back(Self::Value(c == '1'));
-                //     continue;
-                // }
                 'A'..='Z' => {
                     stack.push_back(Self::Variable(c));
                     continue;
@@ -416,6 +424,57 @@ impl<T: Valid> TryFrom<&str> for Tree<T> {
     }
 }
 
+impl TryFrom<&str> for BoolTree {
+    type Error = String;
+
+    fn try_from(formula: &str) -> Result<Self, Self::Error> {
+        use Tree::*;
+
+        let mut stack = VecDeque::<Tree<bool>>::new();
+
+        for (i, c) in formula.char_indices() {
+            match c {
+                '0' | '1' => {
+                    stack.push_back(Value(c == '1'));
+                    continue;
+                }
+                'A'..='Z' => {
+                    stack.push_back(Variable(c));
+                    continue;
+                }
+                ' ' => continue,
+                _ => {}
+            }
+            let q = stack
+                .pop_back()
+                .ok_or(format!("Missing operand at index {}", i))?;
+            if c == '!' {
+                stack.push_back(Not(boxed!(q)));
+                continue;
+            }
+            let p = stack
+                .pop_back()
+                .ok_or(format!("Missing operand at index {}", i))?;
+            stack.push_back(match c {
+                '&' => And(boxed!(p), boxed!(q)),
+                '|' => Or(boxed!(p), boxed!(q)),
+                '^' => Xor(boxed!(p), boxed!(q)),
+                '>' => Implication(boxed!(p), boxed!(q)),
+                '=' => Equivalence(boxed!(p), boxed!(q)),
+                _ => return Err(format!("Invalid character '{}'", c)),
+            });
+        }
+        match stack.len() {
+            1 => Ok(BoolTree {
+                head: stack.pop_front().unwrap(),
+            }),
+            0 => Err("Empty formula".into()),
+            2 => Err("Missing operator".into()),
+            _ => Err("Missing operators".into()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -432,7 +491,7 @@ mod tests {
         ]
         .iter()
         .for_each(|&formula| {
-            let tree = Tree::<bool>::try_from(formula).expect("Failed to parse formula");
+            let tree = BoolTree::try_from(formula).expect("Failed to parse formula");
             assert_eq!(formula, tree.rpn_formula().as_str());
         });
     }

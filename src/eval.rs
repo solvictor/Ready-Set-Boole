@@ -1,11 +1,11 @@
-use ready_set_boole::{Set, Tree};
+use ready_set_boole::{BoolTree, Set, Tree};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
 };
 
 pub fn eval_formula(formula: &str) -> bool {
-    Tree::try_from(formula.to_uppercase().as_str())
+    BoolTree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))
         .evaluate(None)
         .expect(&format!("Invalid formula '{}'", formula))
