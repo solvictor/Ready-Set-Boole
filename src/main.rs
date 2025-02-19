@@ -1,6 +1,7 @@
 use ready_set_boole::Tree;
 use std::collections::HashMap;
 
+mod curve;
 mod eval;
 mod gray_code;
 mod normal_forms;

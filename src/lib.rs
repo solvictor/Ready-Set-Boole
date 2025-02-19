@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    fmt::Display,
     sync::Arc,
 };
 
@@ -360,7 +359,7 @@ impl_flatten!(flatten_or, Or);
   0   1
 
 */
-impl Display for Tree<bool> {
+impl std::fmt::Display for Tree<bool> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Tree::*;
 
