@@ -3,6 +3,11 @@ fn map(x: u16, y: u16) -> f64 {
     (x as f64 * 65536.0 + y as f64) / 4294967295.0
 }
 
+fn reverse_map(n: f64) -> (u16, u16) {
+    let n = n * 4294967295.0;
+    (n.div_euclid(65536.0) as u16, n.rem_euclid(65536.0) as u16)
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
@@ -10,7 +15,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_map() {
+    fn test_map_and_reverse() {
         const LIMIT: u16 = 1000;
         let mut seen = HashSet::<String>::with_capacity((LIMIT as usize).pow(2) * 2);
 
@@ -18,6 +23,7 @@ mod tests {
             for y in 0..=LIMIT {
                 let mapped = map(x, y);
                 assert!(seen.insert(format!("{}", mapped)));
+                assert_eq!((x, y), reverse_map(mapped));
             }
         }
 
@@ -27,6 +33,7 @@ mod tests {
             for y in max - LIMIT..=max {
                 let mapped = map(x, y);
                 assert!(seen.insert(format!("{}", mapped)));
+                assert_eq!((x, y), reverse_map(mapped));
             }
         }
         assert!(!seen.insert(format!("{}", map(42, 42))));
