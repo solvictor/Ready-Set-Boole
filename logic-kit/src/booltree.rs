@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use crate::{boxed, Tree};
 
@@ -58,6 +58,73 @@ impl TryFrom<&str> for BoolTree {
             0 => Err("Empty formula".into()),
             2 => Err("Missing operator".into()),
             _ => Err("Missing operators".into()),
+        }
+    }
+}
+
+impl Tree<bool> {
+    // LGTM
+    pub fn rpn_formula(&self) -> String {
+        use Tree::*;
+
+        match self {
+            Value(val) => if *val { "1" } else { "0" }.to_string(),
+            Variable(var) => var.to_string(),
+            Not(sub) => sub.rpn_formula() + "!",
+            And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
+            Or(left, right) => left.rpn_formula() + &right.rpn_formula() + "|",
+            Xor(left, right) => left.rpn_formula() + &right.rpn_formula() + "^",
+            Implication(left, right) => left.rpn_formula() + &right.rpn_formula() + ">",
+            Equivalence(left, right) => left.rpn_formula() + &right.rpn_formula() + "=",
+        }
+    }
+
+    // TODO use DPLL or CDCL algorithm
+    pub fn is_sat(&self) -> bool {
+        fn backtrack(
+            tree: &Tree<bool>,
+            i: usize,
+            variables: &Vec<char>,
+            state: &mut HashMap<char, bool>,
+        ) -> Result<bool, String> {
+            if i == variables.len() {
+                return Ok(tree.evaluate(Some(state))?);
+            }
+            if backtrack(tree, i + 1, variables, state)? {
+                return Ok(true);
+            }
+            state.insert(variables[i], false);
+            return backtrack(tree, i + 1, variables, state);
+        }
+
+        let tree = self.nnf().cnf().unwrap();
+
+        let variables = self.variables();
+
+        let mut variables_state: HashMap<char, bool> =
+            variables.iter().map(|x| (*x, true)).collect();
+
+        backtrack(&tree, 0, &variables, &mut variables_state).expect("Sat check failed")
+    }
+
+    pub fn as_char(&self) -> char {
+        use Tree::*;
+
+        match self {
+            Value(val) => {
+                if *val {
+                    '⊤'
+                } else {
+                    '⊥'
+                }
+            }
+            Variable(var) => *var,
+            Not(_) => '¬',
+            And(_, _) => '∧',
+            Or(_, _) => '∨',
+            Xor(_, _) => '⊕',
+            Implication(_, _) => '⇒',
+            Equivalence(_, _) => '⇔',
         }
     }
 }

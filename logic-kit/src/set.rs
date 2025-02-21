@@ -1,5 +1,6 @@
 use std::{collections::HashSet, hash::Hash, ops::*, sync::Arc};
 
+// TODO Trait like 'Valid' for Eq + Hash + Clone
 // TODO Maybe too much abstraction with this and Tree<T>
 #[derive(Clone, PartialEq, Debug)]
 pub struct Set<T: Eq + Hash + Clone> {
