@@ -1,4 +1,4 @@
-use ready_set_boole::BoolTree;
+use logic_kit::BoolTree;
 
 fn sat(formula: &str) -> bool {
     BoolTree::try_from(formula.to_uppercase().as_str())

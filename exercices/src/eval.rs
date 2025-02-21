@@ -1,4 +1,4 @@
-use ready_set_boole::{BoolTree, Set, Tree};
+use logic_kit::{BoolTree, Set, Tree};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,

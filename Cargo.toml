@@ -1,12 +1,6 @@
-[package]
-name = "ready-set-boole"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
+[workspace]
+members = ["exercices", "logic-kit"]
+resolver = "2"
 
 [profile.test]
 overflow-checks = false
-
-[dev-dependencies]
-serial_test = "3.2.0"

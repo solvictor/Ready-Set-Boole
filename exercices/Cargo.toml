@@ -1,0 +1,13 @@
+[package]
+name = "exercices"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+logic-kit = { path = "../logic-kit" }
+
+[dev-dependencies]
+serial_test = "3.2.0"
+
+[lints.rust]
+unused = "allow"

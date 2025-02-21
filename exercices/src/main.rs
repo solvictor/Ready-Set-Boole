@@ -1,4 +1,4 @@
-use ready_set_boole::Tree;
+use logic_kit::{BoolTree, Tree};
 use std::collections::HashMap;
 
 mod curve;
@@ -12,7 +12,7 @@ mod sets;
 // TODO Time and space complexity for each exercice
 
 fn main() {
-    let tree = Tree::try_from("101A|&!^");
+    let tree = BoolTree::try_from("101A|&!^");
     println!("{:?}", tree);
 
     let tree = tree.unwrap();
@@ -22,5 +22,5 @@ fn main() {
     state.insert('A', true);
     // state.insert('B', true);
 
-    println!("{}", tree);
+    println!("{:?}", tree);
 }

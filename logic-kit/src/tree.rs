@@ -1,84 +1,6 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::Arc,
-};
+use std::collections::{HashMap, VecDeque};
 
-#[macro_export]
-macro_rules! boxed {
-    ($a:expr) => {
-        Box::new($a)
-    };
-}
-
-use std::collections::HashSet;
-use std::hash::Hash;
-
-// TODO Organize
-// TODO Maybe too much abstraction with this and Tree<T>
-#[derive(Clone, PartialEq, Debug)]
-pub struct Set<T: Eq + Hash> {
-    data: HashSet<T>,
-    universal: Option<Arc<HashSet<T>>>,
-}
-
-impl<T: Eq + Hash + Clone> std::ops::BitXor for Set<T> {
-    type Output = Self;
-
-    fn bitxor(self, rhs: Self) -> Self::Output {
-        Set {
-            data: &self.data ^ &rhs.data,
-            universal: self.universal,
-        }
-    }
-}
-
-impl<T: Eq + Hash + Clone> std::ops::BitOr for Set<T> {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        Set {
-            data: &self.data | &rhs.data,
-            universal: self.universal,
-        }
-    }
-}
-
-impl<T: Eq + Hash + Clone> std::ops::BitAnd for Set<T> {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        Set {
-            data: &self.data & &rhs.data,
-            universal: self.universal,
-        }
-    }
-}
-
-impl<T: Eq + Hash + Clone> std::ops::Not for Set<T> {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        Set {
-            data: &(*self.universal.clone().expect("Missing universal set")) - &self.data,
-            universal: self.universal,
-        }
-    }
-}
-
-impl<T: Eq + Hash> Set<T> {
-    pub fn new(data: HashSet<T>, universal: Option<Arc<HashSet<T>>>) -> Self {
-        Set { data, universal }
-    }
-}
-
-impl<T: Eq + Hash> IntoIterator for Set<T> {
-    type Item = T;
-    type IntoIter = std::collections::hash_set::IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
-    }
-}
+use crate::boxed;
 
 // TODO Better name
 pub trait Valid:
@@ -115,17 +37,7 @@ pub enum Tree<T: Valid> {
     Equivalence(Box<Tree<T>>, Box<Tree<T>>),
 }
 
-pub struct BoolTree(Tree<bool>);
-
-impl std::ops::Deref for BoolTree {
-    type Target = Tree<bool>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-// TODO More abstraction maybe less ?
+// TODO Less abstraction ?
 // TODO Compile time differentiation between NNF and Unchecked
 impl<T: Valid> Tree<T> {
     // Get variables of the formula in alphabetical order
@@ -417,76 +329,5 @@ impl<T: Valid> TryFrom<&str> for Tree<T> {
             2 => Err("Missing operator".into()),
             _ => Err("Missing operators".into()),
         }
-    }
-}
-
-impl TryFrom<&str> for BoolTree {
-    type Error = String;
-
-    fn try_from(formula: &str) -> Result<Self, Self::Error> {
-        use Tree::*;
-
-        let mut stack = VecDeque::<Tree<bool>>::new();
-
-        for (i, c) in formula.char_indices() {
-            match c {
-                '0' | '1' => {
-                    stack.push_back(Value(c == '1'));
-                    continue;
-                }
-                'A'..='Z' => {
-                    stack.push_back(Variable(c));
-                    continue;
-                }
-                ' ' => continue,
-                _ => {}
-            }
-            let q = stack
-                .pop_back()
-                .ok_or(format!("Missing operand at index {}", i))?;
-            if c == '!' {
-                stack.push_back(Not(boxed!(q)));
-                continue;
-            }
-            let p = stack
-                .pop_back()
-                .ok_or(format!("Missing operand at index {}", i))?;
-            stack.push_back(match c {
-                '&' => And(boxed!(p), boxed!(q)),
-                '|' => Or(boxed!(p), boxed!(q)),
-                '^' => Xor(boxed!(p), boxed!(q)),
-                '>' => Implication(boxed!(p), boxed!(q)),
-                '=' => Equivalence(boxed!(p), boxed!(q)),
-                _ => return Err(format!("Invalid character '{}'", c)),
-            });
-        }
-        match stack.len() {
-            1 => Ok(BoolTree(stack.pop_front().unwrap())),
-            0 => Err("Empty formula".into()),
-            2 => Err("Missing operator".into()),
-            _ => Err("Missing operators".into()),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_boolean_tree_rpn_formula() {
-        [
-            "AB&C|",
-            "ADJ&|",
-            "ADJA&|^",
-            "1001&|^",
-            "1A&",
-            "10BA&|^10BC=>!&|",
-        ]
-        .iter()
-        .for_each(|&formula| {
-            let tree = BoolTree::try_from(formula).expect("Failed to parse formula");
-            assert_eq!(formula, tree.rpn_formula().as_str());
-        });
     }
 }
