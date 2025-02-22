@@ -1,6 +1,5 @@
-use std::collections::{HashMap, VecDeque};
-
 use crate::{boxed, Tree};
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
 pub struct BoolTree(Tree<bool>);
@@ -88,7 +87,7 @@ impl Tree<bool> {
             state: &mut HashMap<char, bool>,
         ) -> Result<bool, String> {
             if i == variables.len() {
-                return Ok(tree.evaluate(Some(state))?);
+                return tree.evaluate(Some(state));
             }
             if backtrack(tree, i + 1, variables, state)? {
                 return Ok(true);

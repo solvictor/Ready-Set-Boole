@@ -1,32 +1,31 @@
-use std::collections::{HashMap, VecDeque};
-
 use crate::boxed;
+use std::collections::{HashMap, VecDeque};
+use std::ops::*;
 
-// TODO Better name
-pub trait Valid:
-    std::ops::Not<Output = Self>
-    + std::ops::BitAnd<Output = Self>
-    + std::ops::BitOr<Output = Self>
-    + std::ops::BitXor<Output = Self>
+pub trait Evaluable:
+    Not<Output = Self>
+    + BitAnd<Output = Self>
+    + BitOr<Output = Self>
+    + BitXor<Output = Self>
     + std::cmp::PartialEq
     + Clone
 {
 }
 
-// Weird but ok
+// Implement it on any type that already can
 impl<
-        T: std::ops::Not<Output = Self>
-            + std::ops::BitAnd<Output = Self>
-            + std::ops::BitOr<Output = Self>
-            + std::ops::BitXor<Output = Self>
+        T: Not<Output = Self>
+            + BitAnd<Output = Self>
+            + BitOr<Output = Self>
+            + BitXor<Output = Self>
             + std::cmp::PartialEq
             + Clone,
-    > Valid for T
+    > Evaluable for T
 {
 }
 
 #[derive(Clone, Debug)]
-pub enum Tree<T: Valid> {
+pub enum Tree<T: Evaluable> {
     Value(T),
     Variable(char),
     Not(Box<Tree<T>>),
@@ -39,7 +38,7 @@ pub enum Tree<T: Valid> {
 
 // TODO Less abstraction ?
 // TODO Compile time differentiation between NNF and Unchecked
-impl<T: Valid> Tree<T> {
+impl<T: Evaluable> Tree<T> {
     // Get variables of the formula in alphabetical order
     pub fn variables(&self) -> Vec<char> {
         use Tree::*;
@@ -164,9 +163,9 @@ impl<T: Valid> Tree<T> {
 
 macro_rules! impl_flatten {
     ($fn_name:ident, $tree_variant:ident) => {
-        impl<T: Valid> Tree<T> {
+        impl<T: Evaluable> Tree<T> {
             fn $fn_name(&self) -> Self {
-                fn collect_clauses<T: Valid>(node: &Tree<T>) -> Vec<Tree<T>> {
+                fn collect_clauses<T: Evaluable>(node: &Tree<T>) -> Vec<Tree<T>> {
                     match node {
                         Tree::$tree_variant(left, right) => collect_clauses(left)
                             .into_iter()
@@ -222,7 +221,7 @@ impl std::fmt::Display for Tree<bool> {
     }
 }
 
-impl<T: Valid> TryFrom<&str> for Tree<T> {
+impl<T: Evaluable> TryFrom<&str> for Tree<T> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
