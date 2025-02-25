@@ -1,19 +1,18 @@
 use std::{collections::HashSet, hash::Hash, ops::*, sync::Arc};
 
-// TODO Better name
-pub trait Valid: Eq + Hash + Clone {}
+pub trait SetElement: Eq + Hash + Clone {}
 
 // Implement it on any type that already can
-impl<T: Eq + Hash + Clone> Valid for T {}
+impl<T: Eq + Hash + Clone> SetElement for T {}
 
 // TODO Maybe too much abstraction with this and Tree<T>
 #[derive(Clone, PartialEq, Debug)]
-pub struct Set<T: Valid> {
+pub struct Set<T: SetElement> {
     data: HashSet<T>,
     universal: Option<Arc<HashSet<T>>>,
 }
 
-impl<T: Valid> BitXor for Set<T> {
+impl<T: SetElement> BitXor for Set<T> {
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
@@ -24,7 +23,7 @@ impl<T: Valid> BitXor for Set<T> {
     }
 }
 
-impl<T: Valid> BitOr for Set<T> {
+impl<T: SetElement> BitOr for Set<T> {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -35,7 +34,7 @@ impl<T: Valid> BitOr for Set<T> {
     }
 }
 
-impl<T: Valid> BitAnd for Set<T> {
+impl<T: SetElement> BitAnd for Set<T> {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -46,7 +45,7 @@ impl<T: Valid> BitAnd for Set<T> {
     }
 }
 
-impl<T: Valid> Not for Set<T> {
+impl<T: SetElement> Not for Set<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
@@ -57,13 +56,13 @@ impl<T: Valid> Not for Set<T> {
     }
 }
 
-impl<T: Valid> Set<T> {
+impl<T: SetElement> Set<T> {
     pub fn new(data: HashSet<T>, universal: Option<Arc<HashSet<T>>>) -> Self {
         Set { data, universal }
     }
 }
 
-impl<T: Valid> IntoIterator for Set<T> {
+impl<T: SetElement> IntoIterator for Set<T> {
     type Item = T;
     type IntoIter = std::collections::hash_set::IntoIter<T>;
 

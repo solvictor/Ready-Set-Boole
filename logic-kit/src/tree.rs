@@ -192,35 +192,6 @@ macro_rules! impl_flatten {
 impl_flatten!(flatten_and, And);
 impl_flatten!(flatten_or, Or);
 
-// TODO Add display for any type that can be displayed but keep bool with as_char
-/*
-101|& should give
-
-  ^
- / \
-1   v
-   / \
-  0   1
-
-*/
-impl std::fmt::Display for Tree<bool> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Tree::*;
-
-        match self {
-            Value(_) | Variable(_) => write!(f, "{}", self.as_char()),
-            Not(sub) => write!(f, "{}({})", self.as_char(), sub),
-            And(left, right)
-            | Or(left, right)
-            | Xor(left, right)
-            | Implication(left, right)
-            | Equivalence(left, right) => {
-                write!(f, "({} {} {})", left, self.as_char(), right)
-            }
-        }
-    }
-}
-
 impl<T: Evaluable> TryFrom<&str> for Tree<T> {
     type Error = String;
 

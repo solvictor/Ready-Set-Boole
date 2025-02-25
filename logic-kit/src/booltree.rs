@@ -67,7 +67,8 @@ impl Tree<bool> {
         use Tree::*;
 
         match self {
-            Value(val) => if *val { "1" } else { "0" }.to_string(),
+            Value(true) => '1'.to_string(),
+            Value(false) => '0'.to_string(),
             Variable(var) => var.to_string(),
             Not(sub) => sub.rpn_formula() + "!",
             And(left, right) => left.rpn_formula() + &right.rpn_formula() + "&",
@@ -110,13 +111,8 @@ impl Tree<bool> {
         use Tree::*;
 
         match self {
-            Value(val) => {
-                if *val {
-                    '⊤'
-                } else {
-                    '⊥'
-                }
-            }
+            Value(true) => '⊤',
+            Value(false) => '⊥',
             Variable(var) => *var,
             Not(_) => '¬',
             And(_, _) => '∧',
@@ -125,6 +121,41 @@ impl Tree<bool> {
             Implication(_, _) => '⇒',
             Equivalence(_, _) => '⇔',
         }
+    }
+}
+
+// TODO Add display for any type that can be displayed but keep bool with as_char
+/*
+101|& should give
+
+  ^
+ / \
+1   v
+   / \
+  0   1
+
+*/
+impl std::fmt::Display for Tree<bool> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Tree::*;
+
+        match self {
+            Value(_) | Variable(_) => write!(f, "{}", self.as_char()),
+            Not(sub) => write!(f, "{}({})", self.as_char(), sub),
+            And(left, right)
+            | Or(left, right)
+            | Xor(left, right)
+            | Implication(left, right)
+            | Equivalence(left, right) => {
+                write!(f, "({} {} {})", left, self.as_char(), right)
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for BoolTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

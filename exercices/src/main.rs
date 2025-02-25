@@ -22,5 +22,5 @@ fn main() {
     state.insert('A', true);
     // state.insert('B', true);
 
-    println!("{:?}", tree);
+    println!("{}", tree);
 }
