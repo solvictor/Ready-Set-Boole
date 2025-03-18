@@ -11,8 +11,8 @@ pub fn eval_formula(formula: &str) -> bool {
         .expect(&format!("Invalid formula '{}'", formula))
 }
 
-// TODO Revoir l'evaluation
 fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
+    assert!(sets.len() < 27);
     let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula));
 
@@ -26,8 +26,11 @@ fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
             (var, val)
         })
         .collect();
-    let res = tree.evaluate(Some(&state));
-    res.expect("Failed to evaluate set").into_iter().collect()
+
+    tree.evaluate(Some(&state))
+        .expect("Failed to evaluate set")
+        .into_iter()
+        .collect()
 }
 
 #[cfg(test)]
