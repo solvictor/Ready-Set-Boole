@@ -73,28 +73,35 @@ impl<T: Evaluable> Tree<T> {
             .collect()
     }
 
-    // TODO May be invalid if we add a set without associated variable (TODO add a check everywhere and remove Option in evaluate? maybe even remove HashMap and use checked vec)
     pub fn evaluate(&self, state: Option<&HashMap<char, T>>) -> Result<T, String> {
-        use Tree::*;
-
-        Ok(match self {
-            Value(val) => val.clone(),
-            Variable(name) => state
-                .ok_or("Missing state")?
-                .get(name)
-                .ok_or(&format!("Missing value for {} in state", name))?
-                .clone(),
-            Not(p) => !p.evaluate(state)?,
-            And(p, q) => p.evaluate(state)? & q.evaluate(state)?,
-            Or(p, q) => p.evaluate(state)? | q.evaluate(state)?,
-            Xor(p, q) => p.evaluate(state)? ^ q.evaluate(state)?,
-            Implication(p, q) => !p.evaluate(state)? | q.evaluate(state)?,
-            Equivalence(p, q) => {
-                let a = p.evaluate(state)?;
-                let b = q.evaluate(state)?;
-                (a.clone() & b.clone()) | (!a & !b)
+        fn eval<T: Evaluable>(cur: &Tree<T>, state: Option<&HashMap<char, T>>) -> T {
+            use Tree::*;
+            match cur {
+                Value(val) => val.clone(),
+                Variable(name) => state.unwrap().get(name).unwrap().clone(),
+                Not(p) => !eval(p, state),
+                And(p, q) => eval(p, state) & eval(q, state),
+                Or(p, q) => eval(p, state) | eval(q, state),
+                Xor(p, q) => eval(p, state) ^ eval(q, state),
+                Implication(p, q) => !eval(p, state) | eval(q, state),
+                Equivalence(p, q) => {
+                    let a = eval(p, state);
+                    let b = eval(q, state);
+                    (a.clone() & b.clone()) | (!a & !b)
+                }
             }
-        })
+        }
+
+        let variables = self.variables();
+        if !variables.is_empty() && state.is_none_or(|s| s.is_empty()) {
+            Err("Missing state".into())
+        } else if state.is_some_and(|s| {
+            s.keys().len() != variables.len() || s.keys().any(|c| !variables.contains(c))
+        }) {
+            Err("State is not matching variables".into())
+        } else {
+            Ok(eval(self, state))
+        }
     }
 
     // TODO less clone ?
