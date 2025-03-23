@@ -1,3 +1,8 @@
+/*
+   With N = number of bits
+   Time complexity: O(N) (Actually O(1) since N is always 32)
+   Space complexity: O(1)
+*/
 pub fn adder(mut a: u32, mut b: u32) -> u32 {
     while b > 0 {
         let carry = (a & b) << 1;
@@ -7,6 +12,11 @@ pub fn adder(mut a: u32, mut b: u32) -> u32 {
     a
 }
 
+/*
+   With N = number of bits
+   Time complexity: O(N * N) (Actually O(1) since N is always 32)
+   Space complexity: O(1)
+*/
 pub fn multiplier(mut a: u32, mut b: u32) -> u32 {
     let mut res = 0;
     while b > 0 {

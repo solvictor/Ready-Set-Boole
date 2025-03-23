@@ -4,6 +4,11 @@ use std::{
     sync::Arc,
 };
 
+/*
+   With N = length of formula
+   Time complexity: O(N)
+   Space complexity: O(N)
+*/
 pub fn eval_formula(formula: &str) -> bool {
     BoolTree::try_from(formula.to_uppercase().as_str())
         .expect(&format!("Invalid formula '{}'", formula))

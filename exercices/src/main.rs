@@ -8,6 +8,7 @@ mod normal_forms;
 mod operators;
 mod sat;
 mod sets;
+mod truth_table;
 
 // TODO Time and space complexity for each exercice
 
