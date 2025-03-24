@@ -1,7 +1,6 @@
 use logic_kit::BoolTree;
 
 /*
-    TODO Take account of cnf conversiond
    With N = number of variables and M = length of formula
    Time complexity: O(M * 2^N)
    Space complexity: O(M + N)

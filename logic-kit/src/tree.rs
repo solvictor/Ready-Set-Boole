@@ -36,8 +36,6 @@ pub enum Tree<T: Evaluable> {
     Equivalence(Box<Tree<T>>, Box<Tree<T>>),
 }
 
-// TODO Less abstraction ?
-// TODO Compile time differentiation between NNF and Unchecked
 impl<T: Evaluable> Tree<T> {
     // Get variables of the formula in alphabetical order
     pub fn variables(&self) -> Vec<char> {

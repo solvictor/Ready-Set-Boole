@@ -5,7 +5,6 @@ pub trait SetElement: Eq + Hash + Clone {}
 // Implement it on any type that already can
 impl<T: Eq + Hash + Clone> SetElement for T {}
 
-// TODO Maybe too much abstraction with this and Tree<T>
 #[derive(Clone, PartialEq, Debug)]
 pub struct Set<T: SetElement> {
     data: HashSet<T>,
