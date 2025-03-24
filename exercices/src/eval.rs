@@ -11,15 +11,18 @@ use std::{
 */
 pub fn eval_formula(formula: &str) -> bool {
     BoolTree::try_from(formula.to_uppercase().as_str())
-        .expect(&format!("Invalid formula '{}'", formula))
+        .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
+        .unwrap()
         .evaluate(None)
-        .expect(&format!("Invalid formula '{}'", formula))
+        .map_err(|e| format!("Failed to evaluate '{}': {}", formula, e))
+        .unwrap()
 }
 
 fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
     assert!(sets.len() < 27);
     let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
-        .expect(&format!("Invalid formula '{}'", formula));
+        .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
+        .unwrap();
 
     let universal: Arc<HashSet<i32>> = Arc::new(sets.iter().flatten().cloned().collect());
     let state: HashMap<char, Set<i32>> = sets
@@ -33,7 +36,8 @@ fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
         .collect();
 
     tree.evaluate(Some(&state))
-        .expect("Failed to evaluate set")
+        .map_err(|e| format!("Failed to evaluate '{}': {}", formula, e))
+        .unwrap()
         .into_iter()
         .collect()
 }

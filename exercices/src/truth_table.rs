@@ -1,13 +1,13 @@
-use crate::Tree;
+use logic_kit::BoolTree;
 use std::collections::HashMap;
 
 /*
    With N = number of variables and M = length of formula
-   Time complexity: O() TODO
-   Space complexity: O(M + ?)
+   Time complexity: O((N + M) * 2^N)
+   Space complexity: O(M + N)
 */
 pub fn print_truth_table(formula: &str) {
-    let tree = match Tree::try_from(formula.to_uppercase().as_str()) {
+    let tree = match BoolTree::try_from(formula.to_uppercase().as_str()) {
         Ok(tree) => tree,
         Err(e) => {
             eprintln!("Invalid formula '{}': {}", formula, e);
@@ -28,10 +28,10 @@ pub fn print_truth_table(formula: &str) {
             .collect::<String>(),
     );
 
-    println!("{}|---|", "|---".repeat(n as usize));
+    println!("{}|---|", "|---".repeat(n));
 
     // Values
-    for state in 0u32..1 << n {
+    for state in 0..1 << n {
         let variables_state = variables
             .iter()
             .enumerate()
