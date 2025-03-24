@@ -75,6 +75,7 @@ impl<T: Evaluable> Tree<T> {
     pub fn evaluate(&self, state: Option<&HashMap<char, T>>) -> Result<T, String> {
         fn eval<T: Evaluable>(cur: &Tree<T>, state: Option<&HashMap<char, T>>) -> T {
             use Tree::*;
+
             match cur {
                 Value(val) => val.clone(),
                 Variable(name) => state.unwrap().get(name).unwrap().clone(),
@@ -103,7 +104,7 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // TODO less clone ?
+    // TODO less clone ? and real O(N)
     // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
     pub fn nnf(&self) -> Self {
         use Tree::*;
@@ -143,7 +144,7 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // TODO Revoir
+    // TODO less clone ? and real O(N)
     // Implicit conversion to nnf
     pub fn cnf(&self) -> Self {
         fn cnf<T: Evaluable>(cur: &Tree<T>) -> Tree<T> {
