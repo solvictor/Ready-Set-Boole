@@ -96,14 +96,12 @@ impl Tree<bool> {
             return backtrack(tree, i + 1, variables, state);
         }
 
-        let tree = self.nnf().cnf().unwrap();
-
         let variables = self.variables();
 
         let mut variables_state: HashMap<char, bool> =
             variables.iter().map(|x| (*x, true)).collect();
 
-        backtrack(&tree, 0, &variables, &mut variables_state)
+        backtrack(&self, 0, &variables, &mut variables_state)
             .map_err(|e| format!("Failed to evaluate '{}': {}", self.rpn_formula(), e))
             .unwrap()
     }
@@ -116,11 +114,11 @@ impl Tree<bool> {
             Value(false) => '⊥',
             Variable(var) => *var,
             Not(_) => '¬',
-            And(_, _) => '∧',
-            Or(_, _) => '∨',
-            Xor(_, _) => '⊕',
-            Implication(_, _) => '⇒',
-            Equivalence(_, _) => '⇔',
+            And(..) => '∧',
+            Or(..) => '∨',
+            Xor(..) => '⊕',
+            Implication(..) => '⇒',
+            Equivalence(..) => '⇔',
         }
     }
 }

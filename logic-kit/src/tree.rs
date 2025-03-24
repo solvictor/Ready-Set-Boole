@@ -144,26 +144,29 @@ impl<T: Evaluable> Tree<T> {
     }
 
     // TODO Revoir
-    pub fn cnf(&self) -> Result<Self, String> {
-        use Tree::*;
+    // Implicit conversion to nnf
+    pub fn cnf(&self) -> Self {
+        fn cnf<T: Evaluable>(cur: &Tree<T>) -> Tree<T> {
+            use Tree::*;
 
-        match self {
-            Value(_) | Variable(_) | Not(_) => Ok(self.clone()),
-            And(left, right) => Ok(And(boxed!(left.cnf()?), boxed!(right.cnf()?)).flatten_and()),
-            Or(left, right) => {
-                let left = left.cnf()?;
-                let right = right.cnf()?;
-                match (&left, &right) {
-                    (a, And(b, c)) | (And(b, c), a) => Ok(And(
-                        boxed!(Or(boxed!(a.clone()), boxed!((**b).clone())).flatten_or()),
-                        boxed!(Or(boxed!(a.clone()), boxed!((**c).clone())).flatten_or()),
-                    )
-                    .cnf()?),
-                    _ => Ok(Or(boxed!(left), boxed!(right)).flatten_or()),
+            match cur {
+                Value(_) | Variable(_) | Not(_) => cur.clone(),
+                And(left, right) => And(boxed!(cnf(left)), boxed!(cnf(right))).flatten_and(),
+                Or(left, right) => {
+                    let left = cnf(left);
+                    let right = cnf(right);
+                    match (&left, &right) {
+                        (a, And(b, c)) | (And(b, c), a) => cnf(&And(
+                            boxed!(Or(boxed!(a.clone()), boxed!((**b).clone())).flatten_or()),
+                            boxed!(Or(boxed!(a.clone()), boxed!((**c).clone())).flatten_or()),
+                        )),
+                        _ => Or(boxed!(left), boxed!(right)).flatten_or(),
+                    }
                 }
+                _ => unreachable!(),
             }
-            _ => Err("Unexpected operator in CNF".into()),
         }
+        cnf(&self.nnf())
     }
 }
 

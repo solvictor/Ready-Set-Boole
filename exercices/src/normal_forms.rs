@@ -12,9 +12,7 @@ fn conjunctive_normal_form(formula: &str) -> String {
     Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
         .unwrap()
-        .nnf() // TODO can we do everything in cnf directly ?
         .cnf()
-        .unwrap() // Should always be ok thanks to nnf
         .rpn_formula()
 }
 
