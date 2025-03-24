@@ -43,12 +43,11 @@ impl<T: Evaluable> Tree<T> {
     pub fn variables(&self) -> Vec<char> {
         use Tree::*;
 
-        let mut variables = 0u32;
+        let mut variables = 0;
 
         let mut queue = VecDeque::from([self]);
 
-        while !queue.is_empty() {
-            let cur = queue.pop_front().unwrap();
+        while let Some(cur) = queue.pop_front() {
             match cur {
                 Variable(var) => {
                     variables |= 1 << (*var as u8 - 65);
@@ -203,7 +202,7 @@ impl<T: Evaluable> TryFrom<&str> for Tree<T> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
-        let mut stack = VecDeque::<Tree<T>>::new();
+        let mut stack = VecDeque::new();
 
         for (i, c) in formula.char_indices() {
             match c {

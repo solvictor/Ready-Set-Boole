@@ -18,7 +18,7 @@ impl TryFrom<&str> for BoolTree {
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
         use Tree::*;
 
-        let mut stack = VecDeque::<Tree<bool>>::new();
+        let mut stack = VecDeque::new();
 
         for (i, c) in formula.char_indices() {
             match c {
@@ -79,7 +79,6 @@ impl Tree<bool> {
         }
     }
 
-    // TODO use DPLL or CDCL algorithm
     pub fn is_sat(&self) -> bool {
         fn backtrack(
             tree: &Tree<bool>,
@@ -104,7 +103,9 @@ impl Tree<bool> {
         let mut variables_state: HashMap<char, bool> =
             variables.iter().map(|x| (*x, true)).collect();
 
-        backtrack(&tree, 0, &variables, &mut variables_state).expect("Sat check failed")
+        backtrack(&tree, 0, &variables, &mut variables_state)
+            .map_err(|e| format!("Failed to evaluate '{}': {}", self.rpn_formula(), e))
+            .unwrap()
     }
 
     pub fn as_char(&self) -> char {
@@ -124,17 +125,6 @@ impl Tree<bool> {
     }
 }
 
-// TODO Add display for any type that can be displayed but keep bool with as_char
-/*
-101|& should give
-
-  ^
- / \
-1   v
-   / \
-  0   1
-
-*/
 impl std::fmt::Display for Tree<bool> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Tree::*;
@@ -175,7 +165,9 @@ mod tests {
         ]
         .iter()
         .for_each(|&formula| {
-            let tree = BoolTree::try_from(formula).expect("Failed to parse formula");
+            let tree = BoolTree::try_from(formula)
+                .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
+                .unwrap();
             assert_eq!(formula, tree.rpn_formula().as_str());
         });
     }

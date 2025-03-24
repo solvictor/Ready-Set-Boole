@@ -1,8 +1,15 @@
 use logic_kit::BoolTree;
 
+/*
+    TODO Take account of cnf conversiond
+   With N = number of variables and M = length of formula
+   Time complexity: O(M * 2^N)
+   Space complexity: O(M + N)
+*/
 fn sat(formula: &str) -> bool {
     BoolTree::try_from(formula.to_uppercase().as_str())
-        .expect(&format!("Invalid formula '{}'", formula))
+        .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
+        .unwrap()
         .is_sat()
 }
 
