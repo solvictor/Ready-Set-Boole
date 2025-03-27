@@ -1,4 +1,4 @@
-use crate::{boxed, Tree};
+use crate::{rc, Rc, Tree};
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -37,18 +37,18 @@ impl TryFrom<&str> for BoolTree {
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             if c == '!' {
-                stack.push_back(Not(boxed!(q)));
+                stack.push_back(Not(rc!(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             stack.push_back(match c {
-                '&' => And(boxed!(p), boxed!(q)),
-                '|' => Or(boxed!(p), boxed!(q)),
-                '^' => Xor(boxed!(p), boxed!(q)),
-                '>' => Implication(boxed!(p), boxed!(q)),
-                '=' => Equivalence(boxed!(p), boxed!(q)),
+                '&' => And(rc!(p), rc!(q)),
+                '|' => Or(rc!(p), rc!(q)),
+                '^' => Xor(rc!(p), rc!(q)),
+                '>' => Implication(rc!(p), rc!(q)),
+                '=' => Equivalence(rc!(p), rc!(q)),
                 _ => return Err(format!("Invalid character '{}'", c)),
             });
         }

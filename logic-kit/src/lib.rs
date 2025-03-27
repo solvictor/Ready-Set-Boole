@@ -6,9 +6,11 @@ pub use booltree::BoolTree;
 pub use set::Set;
 pub use tree::Tree;
 
+use std::rc::Rc;
+
 #[macro_export]
-macro_rules! boxed {
+macro_rules! rc {
     ($a:expr) => {
-        Box::new($a)
+        Rc::new($a)
     };
 }

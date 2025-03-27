@@ -1,6 +1,7 @@
-use crate::boxed;
+use crate::rc;
 use std::collections::{HashMap, VecDeque};
 use std::ops::*;
+use std::rc::Rc;
 
 pub trait Evaluable:
     Not<Output = Self>
@@ -28,12 +29,12 @@ impl<
 pub enum Tree<T: Evaluable> {
     Value(T),
     Variable(char),
-    Not(Box<Tree<T>>),
-    And(Box<Tree<T>>, Box<Tree<T>>),
-    Or(Box<Tree<T>>, Box<Tree<T>>),
-    Xor(Box<Tree<T>>, Box<Tree<T>>),
-    Implication(Box<Tree<T>>, Box<Tree<T>>),
-    Equivalence(Box<Tree<T>>, Box<Tree<T>>),
+    Not(Rc<Tree<T>>),
+    And(Rc<Tree<T>>, Rc<Tree<T>>),
+    Or(Rc<Tree<T>>, Rc<Tree<T>>),
+    Xor(Rc<Tree<T>>, Rc<Tree<T>>),
+    Implication(Rc<Tree<T>>, Rc<Tree<T>>),
+    Equivalence(Rc<Tree<T>>, Rc<Tree<T>>),
 }
 
 impl<T: Evaluable> Tree<T> {
@@ -102,43 +103,44 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // TODO less clone ? and real O(N)
     // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
     pub fn nnf(&self) -> Self {
         use Tree::*;
 
         match self {
             Value(_) | Variable(_) => self.clone(),
-            Not(sub) => match *sub.clone() {
+            Not(sub) => match sub.as_ref() {
                 Value(_) | Variable(_) => self.clone(),
                 Not(subb) => subb.nnf(),
-                And(left, right) => Or(boxed!(Not(left)), boxed!(Not(right))).nnf(),
-                Or(left, right) => And(boxed!(Not(left)), boxed!(Not(right))).nnf(),
+                And(left, right) => Or(rc!(Not(left.clone()).nnf()), rc!(Not(right.clone()).nnf())),
+                Or(left, right) => And(rc!(Not(left.clone()).nnf()), rc!(Not(right.clone()).nnf())),
                 Xor(left, right) => And(
-                    boxed!(Or(left.clone(), boxed!(Not(right.clone())))),
-                    boxed!(Or(boxed!(Not(left.clone())), right.clone())),
-                )
-                .nnf(),
-                Implication(left, right) => And(left, boxed!(Not(right))).nnf(),
+                    rc!(Or(rc!(left.nnf()), rc!(Not(right.clone()).nnf()))),
+                    rc!(Or(rc!(Not(left.clone()).nnf()), rc!(right.nnf()))),
+                ),
+                Implication(left, right) => And(rc!(left.nnf()), rc!(Not(right.clone()).nnf())),
                 Equivalence(left, right) => And(
-                    boxed!(Or(left.clone(), right.clone())),
-                    boxed!(Or(boxed!(Not(left.clone())), boxed!(Not(right.clone())))),
-                )
-                .nnf(),
+                    rc!(Or(rc!(left.nnf()), rc!(right.nnf()))),
+                    rc!(Or(
+                        rc!(Not(left.clone()).nnf()),
+                        rc!(Not(right.clone()).nnf())
+                    )),
+                ),
             },
-            And(left, right) => And(boxed!(left.nnf()), boxed!(right.nnf())),
-            Or(left, right) => Or(boxed!(left.nnf()), boxed!(right.nnf())),
+            And(left, right) => And(rc!(left.nnf()), rc!(right.nnf())),
+            Or(left, right) => Or(rc!(left.nnf()), rc!(right.nnf())),
             Xor(left, right) => Or(
-                boxed!(And(boxed!(Not(left.clone())), right.clone())),
-                boxed!(And(left.clone(), boxed!(Not(right.clone())))),
-            )
-            .nnf(),
-            Implication(left, right) => Or(boxed!(Not(left.clone())), right.clone()).nnf(),
+                rc!(And(rc!(Not(left.clone()).nnf()), rc!(right.nnf()))),
+                rc!(And(rc!(left.nnf()), rc!(Not(right.clone()).nnf()))),
+            ),
+            Implication(left, right) => Or(rc!(Not(left.clone()).nnf()), rc!(right.nnf())),
             Equivalence(left, right) => Or(
-                boxed!(And(left.clone(), right.clone())),
-                boxed!(And(boxed!(Not(left.clone())), boxed!(Not(right.clone())))),
-            )
-            .nnf(),
+                rc!(And(rc!(left.nnf()), rc!(right.nnf()))),
+                rc!(And(
+                    rc!(Not(left.clone()).nnf()),
+                    rc!(Not(right.clone()).nnf())
+                )),
+            ),
         }
     }
 
@@ -150,16 +152,16 @@ impl<T: Evaluable> Tree<T> {
 
             match cur {
                 Value(_) | Variable(_) | Not(_) => cur.clone(),
-                And(left, right) => And(boxed!(cnf(left)), boxed!(cnf(right))).flatten_and(),
+                And(left, right) => And(rc!(cnf(left)), rc!(cnf(right))).flatten_and(),
                 Or(left, right) => {
                     let left = cnf(left);
                     let right = cnf(right);
                     match (&left, &right) {
                         (a, And(b, c)) | (And(b, c), a) => cnf(&And(
-                            boxed!(Or(boxed!(a.clone()), boxed!((**b).clone())).flatten_or()),
-                            boxed!(Or(boxed!(a.clone()), boxed!((**c).clone())).flatten_or()),
+                            rc!(Or(rc!(a.clone()), rc!((**b).clone())).flatten_or()),
+                            rc!(Or(rc!(a.clone()), rc!((**c).clone())).flatten_or()),
                         )),
-                        _ => Or(boxed!(left), boxed!(right)).flatten_or(),
+                        _ => Or(rc!(left), rc!(right)).flatten_or(),
                     }
                 }
                 _ => unreachable!(),
@@ -190,7 +192,7 @@ macro_rules! impl_flatten {
                 ));
 
                 iter.fold(last, |acc, clause| {
-                    Tree::$tree_variant(boxed!(clause), boxed!(acc))
+                    Tree::$tree_variant(rc!(clause), rc!(acc))
                 })
             }
         }
@@ -219,18 +221,18 @@ impl<T: Evaluable> TryFrom<&str> for Tree<T> {
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             if c == '!' {
-                stack.push_back(Self::Not(boxed!(q)));
+                stack.push_back(Self::Not(rc!(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             stack.push_back(match c {
-                '&' => Self::And(boxed!(p), boxed!(q)),
-                '|' => Self::Or(boxed!(p), boxed!(q)),
-                '^' => Self::Xor(boxed!(p), boxed!(q)),
-                '>' => Self::Implication(boxed!(p), boxed!(q)),
-                '=' => Self::Equivalence(boxed!(p), boxed!(q)),
+                '&' => Self::And(rc!(p), rc!(q)),
+                '|' => Self::Or(rc!(p), rc!(q)),
+                '^' => Self::Xor(rc!(p), rc!(q)),
+                '>' => Self::Implication(rc!(p), rc!(q)),
+                '=' => Self::Equivalence(rc!(p), rc!(q)),
                 _ => return Err(format!("Invalid character '{}'", c)),
             });
         }

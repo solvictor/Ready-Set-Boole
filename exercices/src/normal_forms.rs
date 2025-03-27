@@ -1,6 +1,6 @@
 use logic_kit::Tree;
 
-/* TODO Check
+/*
    With N = length of formula
    Time complexity: O(N)
    Space complexity: O(N)
