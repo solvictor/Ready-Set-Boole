@@ -206,12 +206,14 @@ impl<T: Evaluable> TryFrom<&str> for Tree<T> {
     type Error = String;
 
     fn try_from(formula: &str) -> Result<Self, Self::Error> {
+        use Tree::*;
+
         let mut stack = VecDeque::new();
 
         for (i, c) in formula.char_indices() {
             match c {
                 'A'..='Z' => {
-                    stack.push_back(Self::Variable(c));
+                    stack.push_back(Variable(c));
                     continue;
                 }
                 ' ' => continue,
@@ -221,18 +223,18 @@ impl<T: Evaluable> TryFrom<&str> for Tree<T> {
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             if c == '!' {
-                stack.push_back(Self::Not(rc!(q)));
+                stack.push_back(Not(rc!(q)));
                 continue;
             }
             let p = stack
                 .pop_back()
                 .ok_or(format!("Missing operand at index {}", i))?;
             stack.push_back(match c {
-                '&' => Self::And(rc!(p), rc!(q)),
-                '|' => Self::Or(rc!(p), rc!(q)),
-                '^' => Self::Xor(rc!(p), rc!(q)),
-                '>' => Self::Implication(rc!(p), rc!(q)),
-                '=' => Self::Equivalence(rc!(p), rc!(q)),
+                '&' => And(rc!(p), rc!(q)),
+                '|' => Or(rc!(p), rc!(q)),
+                '^' => Xor(rc!(p), rc!(q)),
+                '>' => Implication(rc!(p), rc!(q)),
+                '=' => Equivalence(rc!(p), rc!(q)),
                 _ => return Err(format!("Invalid character '{}'", c)),
             });
         }
