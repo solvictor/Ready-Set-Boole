@@ -18,7 +18,7 @@ pub fn eval_formula(formula: &str) -> bool {
         .unwrap()
 }
 
-fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
+pub fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
     assert!(sets.len() < 27);
     let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))

@@ -1,4 +1,4 @@
-use crate::{rc, Rc, Tree};
+use crate::{Rc, Tree, rc};
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -54,9 +54,9 @@ impl TryFrom<&str> for BoolTree {
         }
         match stack.len() {
             1 => Ok(BoolTree(stack.pop_front().unwrap())),
-            0 => Err("Empty formula".into()),
-            2 => Err("Missing operator".into()),
-            _ => Err("Missing operators".into()),
+            0 => Err("Empty formula".to_string()),
+            2 => Err("Missing operator".to_string()),
+            _ => Err("Missing operators".to_string()),
         }
     }
 }

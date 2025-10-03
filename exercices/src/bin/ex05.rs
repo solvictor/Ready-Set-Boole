@@ -1,0 +1,10 @@
+use exercices::normal_forms::negation_normal_form;
+
+fn main() -> Result<(), &'static str> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    match args.len() {
+        1 => Ok(println!("{}", negation_normal_form(&args[0]))),
+        _ => Err("Usage: cargo run -q --bin ex05 'formula'"),
+    }
+}

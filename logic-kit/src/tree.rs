@@ -15,13 +15,13 @@ pub trait Evaluable:
 
 // Implement it on any type that already can
 impl<
-        T: Not<Output = Self>
-            + BitAnd<Output = Self>
-            + BitOr<Output = Self>
-            + BitXor<Output = Self>
-            + std::cmp::PartialEq
-            + Clone,
-    > Evaluable for T
+    T: Not<Output = Self>
+        + BitAnd<Output = Self>
+        + BitOr<Output = Self>
+        + BitXor<Output = Self>
+        + std::cmp::PartialEq
+        + Clone,
+> Evaluable for T
 {
 }
 
@@ -93,11 +93,11 @@ impl<T: Evaluable> Tree<T> {
 
         let variables = self.variables();
         if !variables.is_empty() && state.is_none_or(|s| s.is_empty()) {
-            Err("Missing state".into())
+            Err("Missing state".to_string())
         } else if state.is_some_and(|s| {
             s.keys().len() != variables.len() || s.keys().any(|c| !variables.contains(c))
         }) {
-            Err("State is not matching variables".into())
+            Err("State is not matching variables".to_string())
         } else {
             Ok(eval(self, state))
         }
@@ -240,9 +240,9 @@ impl<T: Evaluable> TryFrom<&str> for Tree<T> {
         }
         match stack.len() {
             1 => Ok(stack.pop_front().unwrap()),
-            0 => Err("Empty formula".into()),
-            2 => Err("Missing operator".into()),
-            _ => Err("Missing operators".into()),
+            0 => Err("Empty formula".to_string()),
+            2 => Err("Missing operator".to_string()),
+            _ => Err("Missing operators".to_string()),
         }
     }
 }

@@ -12,7 +12,7 @@ pub fn map(x: u16, y: u16) -> f64 {
    Time complexity: O(1)
    Space complexity: O(1)
 */
-fn reverse_map(n: f64) -> (u16, u16) {
+pub fn reverse_map(n: f64) -> (u16, u16) {
     let n = n * 4294967295.0;
     (n.div_euclid(65536.0) as u16, n.rem_euclid(65536.0) as u16)
 }

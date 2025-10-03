@@ -3,7 +3,7 @@
    Time complexity: O(2^N)
    Space complexity: O(2^N)
 */
-fn powerset(set: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn powerset(set: Vec<i32>) -> Vec<Vec<i32>> {
     let mut res = vec![];
     fn solve(i: usize, set: &Vec<i32>, cur: &mut Vec<i32>, res: &mut Vec<Vec<i32>>) {
         if i == set.len() {

@@ -5,7 +5,7 @@ use logic_kit::Tree;
    Time complexity: O(N)
    Space complexity: O(N)
 */
-fn negation_normal_form(formula: &str) -> String {
+pub fn negation_normal_form(formula: &str) -> String {
     Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
         .unwrap()
@@ -18,7 +18,7 @@ fn negation_normal_form(formula: &str) -> String {
    Time complexity: O(N)
    Space complexity: O(N)
 */
-fn conjunctive_normal_form(formula: &str) -> String {
+pub fn conjunctive_normal_form(formula: &str) -> String {
     Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
         .unwrap()

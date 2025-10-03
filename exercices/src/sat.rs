@@ -5,7 +5,7 @@ use logic_kit::BoolTree;
    Time complexity: O(M * 2^N)
    Space complexity: O(M + N)
 */
-fn sat(formula: &str) -> bool {
+pub fn sat(formula: &str) -> bool {
     BoolTree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
         .unwrap()
