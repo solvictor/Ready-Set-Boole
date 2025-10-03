@@ -12,8 +12,7 @@ fn main() -> Result<(), String> {
     match args.len() {
         1 => {
             let x = args[0];
-            let (y, z) = reverse_map(x);
-            Ok(println!("{} => ({}, {})", x, y, z))
+            Ok(println!("{} => {:?}", x, reverse_map(x)))
         }
         _ => Err("Usage: cargo run -q --bin ex11 x".to_string()),
     }
