@@ -1,6 +1,6 @@
 use std::{collections::HashMap, u16};
 
-pub mod logic;
+mod logic;
 
 pub mod curve;
 pub mod eval;
