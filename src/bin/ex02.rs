@@ -1,4 +1,4 @@
-use exercices::gray_code::gray_code;
+use ready_set_boole::gray_code::gray_code;
 
 fn main() -> Result<(), String> {
     let args: Vec<u32> = std::env::args()

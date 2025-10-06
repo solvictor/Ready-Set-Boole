@@ -1,6 +1,16 @@
-[workspace]
-members = ["exercices", "logic-kit"]
-resolver = "2"
+[package]
+name = "ready-set-boole"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+itertools = "0.14.0"
+
+[dev-dependencies]
+serial_test = "3.2.0"
+
+[lints.rust]
+unused = "allow"
 
 [profile.test]
 overflow-checks = false

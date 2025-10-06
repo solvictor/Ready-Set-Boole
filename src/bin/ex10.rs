@@ -1,4 +1,4 @@
-use exercices::curve::map;
+use ready_set_boole::curve::map;
 
 fn main() -> Result<(), String> {
     let args: Vec<u16> = std::env::args()

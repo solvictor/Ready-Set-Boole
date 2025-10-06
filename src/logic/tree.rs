@@ -1,7 +1,7 @@
+use crate::logic::Rc;
 use crate::rc;
 use std::collections::{HashMap, VecDeque};
 use std::ops::*;
-use std::rc::Rc;
 
 pub trait Evaluable:
     Not<Output = Self>

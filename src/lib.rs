@@ -1,5 +1,7 @@
 use std::{collections::HashMap, u16};
 
+pub mod logic;
+
 pub mod curve;
 pub mod eval;
 pub mod gray_code;

@@ -1,4 +1,4 @@
-use exercices::curve::reverse_map;
+use ready_set_boole::curve::reverse_map;
 
 fn main() -> Result<(), String> {
     let args: Vec<f64> = std::env::args()

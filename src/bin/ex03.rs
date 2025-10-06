@@ -1,4 +1,4 @@
-use exercices::eval::eval_formula;
+use ready_set_boole::eval::eval_formula;
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = std::env::args().skip(1).collect();

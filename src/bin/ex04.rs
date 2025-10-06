@@ -1,4 +1,4 @@
-use exercices::truth_table::print_truth_table;
+use ready_set_boole::truth_table::print_truth_table;
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = std::env::args().skip(1).collect();

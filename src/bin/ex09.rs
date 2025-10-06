@@ -1,4 +1,4 @@
-use exercices::eval::eval_set;
+use ready_set_boole::eval::eval_set;
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();

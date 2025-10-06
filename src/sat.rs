@@ -1,4 +1,4 @@
-use logic_kit::BoolTree;
+use crate::logic::BoolTree;
 
 /*
    With N = number of variables and M = length of formula

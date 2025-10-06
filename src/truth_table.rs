@@ -1,4 +1,4 @@
-use logic_kit::BoolTree;
+use crate::logic::BoolTree;
 use std::collections::HashMap;
 
 /*

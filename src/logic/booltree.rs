@@ -1,4 +1,5 @@
-use crate::{Rc, Tree, rc};
+use crate::logic::{Rc, Tree};
+use crate::rc;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]

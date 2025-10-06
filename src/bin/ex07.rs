@@ -1,4 +1,4 @@
-use exercices::sat::sat;
+use ready_set_boole::sat::sat;
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = std::env::args().skip(1).collect();

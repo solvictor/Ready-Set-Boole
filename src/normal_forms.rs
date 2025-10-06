@@ -1,4 +1,4 @@
-use logic_kit::Tree;
+use crate::logic::Tree;
 
 /*
    With N = length of formula

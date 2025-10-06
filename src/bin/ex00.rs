@@ -1,5 +1,5 @@
-use exercices::operators::adder;
 use itertools::Itertools as _;
+use ready_set_boole::operators::adder;
 
 fn main() -> Result<(), String> {
     let args: Vec<u32> = std::env::args()

@@ -1,4 +1,4 @@
-use exercices::normal_forms::negation_normal_form;
+use ready_set_boole::normal_forms::negation_normal_form;
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = std::env::args().skip(1).collect();

@@ -1,4 +1,4 @@
-use logic_kit::{BoolTree, Set, Tree};
+use crate::logic::{BoolTree, Set, Tree};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,

@@ -1,4 +1,4 @@
-use exercices::sets::powerset;
+use ready_set_boole::sets::powerset;
 
 fn main() -> Result<(), String> {
     let args: Vec<i32> = std::env::args()
