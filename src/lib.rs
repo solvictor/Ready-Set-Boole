@@ -10,6 +10,3 @@ pub mod operators;
 pub mod sat;
 pub mod sets;
 pub mod truth_table;
-
-// TODO Time and space complexity for each exercice
-// TODO Better code structure

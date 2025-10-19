@@ -18,6 +18,11 @@ pub fn eval_formula(formula: &str) -> bool {
         .unwrap()
 }
 
+/*
+   With N = length of formula and M = length of universal set
+   Time complexity: O(N * M)
+   Space complexity: O(N + M)
+*/
 pub fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
     assert!(sets.len() < 27);
     let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
