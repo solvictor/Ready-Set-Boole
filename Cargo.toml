@@ -9,8 +9,8 @@ itertools = "0.14.0"
 [dev-dependencies]
 serial_test = "3.2.0"
 
-[lints.rust]
-unused = "allow"
+[lints.clippy]
+unit_arg = "allow"
 
 [profile.test]
 overflow-checks = false

@@ -55,11 +55,11 @@ mod tests {
 
     #[test]
     fn test_eval_subject() {
-        assert_eq!(eval_formula("10&"), false);
-        assert_eq!(eval_formula("10|"), true);
-        assert_eq!(eval_formula("11>"), true);
-        assert_eq!(eval_formula("10="), false);
-        assert_eq!(eval_formula("1011||="), true);
+        assert!(!eval_formula("10&"));
+        assert!(eval_formula("10|"));
+        assert!(eval_formula("11>"));
+        assert!(!eval_formula("10="));
+        assert!(eval_formula("1011||="));
     }
 
     #[test]

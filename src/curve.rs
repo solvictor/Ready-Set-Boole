@@ -36,7 +36,7 @@ mod tests {
             }
         }
 
-        let max = std::u16::MAX;
+        let max = u16::MAX;
 
         for x in max - LIMIT..=max {
             for y in max - LIMIT..=max {

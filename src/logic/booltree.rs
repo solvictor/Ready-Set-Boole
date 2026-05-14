@@ -94,7 +94,7 @@ impl Tree<bool> {
                 return Ok(true);
             }
             state.insert(variables[i], false);
-            return backtrack(tree, i + 1, variables, state);
+            backtrack(tree, i + 1, variables, state)
         }
 
         let variables = self.variables();
@@ -102,7 +102,7 @@ impl Tree<bool> {
         let mut variables_state: HashMap<char, bool> =
             variables.iter().map(|x| (*x, true)).collect();
 
-        backtrack(&self, 0, &variables, &mut variables_state)
+        backtrack(self, 0, &variables, &mut variables_state)
             .map_err(|e| format!("Failed to evaluate '{}': {}", self.rpn_formula(), e))
             .unwrap()
     }
