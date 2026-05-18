@@ -103,6 +103,28 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
+    // Apply negation
+    pub fn negate(&self) -> Self {
+        use Tree::*;
+
+        match self {
+            Value(val) => Value(val.clone().not()),
+            Variable(_) => Not(rc!(self.clone())),
+            Not(sub) => sub.as_ref().clone(),
+            And(left, right) => Or(rc!(left.negate()), rc!(right.negate())),
+            Or(left, right) => And(rc!(left.negate()), rc!(right.negate())),
+            Xor(left, right) => And(
+                rc!(Or(left.clone(), rc!(right.negate()))),
+                rc!(Or(rc!(left.negate()), right.clone())),
+            ),
+            Implication(left, right) => And(left.clone(), rc!(right.negate())),
+            Equivalence(left, right) => And(
+                rc!(Or(rc!(left.negate()), rc!(right.negate()))),
+                rc!(Or(left.clone(), right.clone())),
+            ),
+        }
+    }
+
     // Any expression using Exclusive disjunction | Implication | Equivalence have multiple valid representations
     pub fn nnf(&self) -> Self {
         use Tree::*;
@@ -144,20 +166,19 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // TODO less clone ? and real O(N)
-    // Implicit conversion to nnf
-    pub fn cnf(&self) -> Self {
-        fn cnf<T: Evaluable>(cur: &Tree<T>) -> Tree<T> {
+    // TODO
+    pub fn dnf(&self) -> Self {
+        fn dnf<T: Evaluable>(cur: &Tree<T>) -> Tree<T> {
             use Tree::*;
 
             match cur {
                 Value(_) | Variable(_) | Not(_) => cur.clone(),
-                And(left, right) => And(rc!(cnf(left)), rc!(cnf(right))).flatten_and(),
+                And(left, right) => And(rc!(dnf(left)), rc!(dnf(right))).flatten_and(),
                 Or(left, right) => {
-                    let left = cnf(left);
-                    let right = cnf(right);
+                    let left = dnf(left);
+                    let right = dnf(right);
                     match (&left, &right) {
-                        (a, And(b, c)) | (And(b, c), a) => cnf(&And(
+                        (a, And(b, c)) | (And(b, c), a) => dnf(&And(
                             rc!(Or(rc!(a.clone()), rc!((**b).clone())).flatten_or()),
                             rc!(Or(rc!(a.clone()), rc!((**c).clone())).flatten_or()),
                         )),
@@ -167,40 +188,13 @@ impl<T: Evaluable> Tree<T> {
                 _ => unreachable!(),
             }
         }
-        cnf(&self.nnf())
+        dnf(&self.nnf())
+    }
+
+    pub fn cnf(&self) -> Self {
+        self.negate().dnf().negate()
     }
 }
-
-macro_rules! impl_flatten {
-    ($fn_name:ident, $tree_variant:ident) => {
-        impl<T: Evaluable> Tree<T> {
-            fn $fn_name(&self) -> Self {
-                fn collect_clauses<T: Evaluable>(node: &Tree<T>) -> Vec<Tree<T>> {
-                    match node {
-                        Tree::$tree_variant(left, right) => collect_clauses(left)
-                            .into_iter()
-                            .chain(collect_clauses(right).into_iter())
-                            .collect(),
-                        _ => vec![node.clone()],
-                    }
-                }
-
-                let mut iter = collect_clauses(self).into_iter().rev();
-                let last = iter.next().expect(concat!(
-                    stringify!($tree_variant),
-                    " must have at least one clause"
-                ));
-
-                iter.fold(last, |acc, clause| {
-                    Tree::$tree_variant(rc!(clause), rc!(acc))
-                })
-            }
-        }
-    };
-}
-
-impl_flatten!(flatten_and, And);
-impl_flatten!(flatten_or, Or);
 
 impl<T: Evaluable> TryFrom<&str> for Tree<T> {
     type Error = String;
