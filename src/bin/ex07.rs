@@ -6,7 +6,7 @@ fn main() -> Result<(), &'static str> {
     match args.len() {
         1 => Ok(println!(
             "The formula '{}' {} satisfiable.",
-            &args[0],
+            args[0],
             if sat(&args[0]) { "is" } else { "is not" }
         )),
         _ => Err("Usage: cargo run -q --bin ex07 'formula'"),
