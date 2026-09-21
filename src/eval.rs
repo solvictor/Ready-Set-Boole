@@ -18,11 +18,6 @@ pub fn eval_formula(formula: &str) -> bool {
         .unwrap()
 }
 
-/*
-   With N = length of formula and M = length of universal set
-   Time complexity: O(N * M)
-   Space complexity: O(N + M)
-*/
 pub fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
     assert!(sets.len() < 27);
     let tree: Tree<Set<i32>> = Tree::try_from(formula.to_uppercase().as_str())
@@ -31,11 +26,11 @@ pub fn eval_set(formula: &str, sets: Vec<Vec<i32>>) -> Vec<i32> {
 
     let universal: Arc<HashSet<i32>> = Arc::new(sets.iter().flatten().cloned().collect());
     let state: HashMap<char, Set<i32>> = sets
-        .iter()
+        .into_iter()
         .enumerate()
         .map(|(i, set)| {
             let var = (65 + i as u8) as char;
-            let val = Set::new(set.clone().into_iter().collect(), Some(universal.clone()));
+            let val = Set::new(HashSet::from_iter(set), Some(universal.clone()));
             (var, val)
         })
         .collect();

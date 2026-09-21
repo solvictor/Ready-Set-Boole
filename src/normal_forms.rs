@@ -1,11 +1,5 @@
 use crate::logic::Tree;
 
-// TODO Remove complexities ?
-/*
-   With N = length of formula
-   Time complexity: O(N)
-   Space complexity: O(N)
-*/
 pub fn negation_normal_form(formula: &str) -> String {
     Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
@@ -14,11 +8,6 @@ pub fn negation_normal_form(formula: &str) -> String {
         .rpn_formula()
 }
 
-/*
-   With N = length of formula
-   Time complexity: O(N)
-   Space complexity: O(N)
-*/
 pub fn conjunctive_normal_form(formula: &str) -> String {
     Tree::try_from(formula.to_uppercase().as_str())
         .map_err(|e| format!("Invalid formula '{}': {}", formula, e))
