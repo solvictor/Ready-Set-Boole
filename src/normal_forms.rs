@@ -58,6 +58,8 @@ mod tests {
             ("AB|!", "A!B!&"),
             ("AB!!&", "AB&"),
             ("AB!!!&", "AB!&"),
+            ("A!!!!!!!", "A!"),
+            ("A!!!!!!!!", "A"),
         ]
         .iter()
         .for_each(|&(formula, nnf)| {
