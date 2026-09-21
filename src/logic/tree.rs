@@ -103,25 +103,91 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // Apply negation
-    pub fn negate(&self) -> Self {
+    fn flatten_cnf(self) -> Self {
+        use Tree::*;
+
+        fn collect_clause<T: Evaluable>(expr: &Tree<T>, clause: &mut Vec<Tree<T>>) {
+            match expr {
+                Or(left, right) => {
+                    collect_clause(left, clause);
+                    collect_clause(right, clause);
+                }
+                Value(_) | Variable(_) => clause.push(expr.clone()),
+                Not(inner) => match inner.as_ref() {
+                    Value(_) | Variable(_) => clause.push(expr.clone()),
+                    _ => panic!("Formula isn't CNF"),
+                },
+                _ => panic!("Formula isn't CNF"),
+            }
+        }
+
+        fn collect_clauses<T: Evaluable>(expr: &Tree<T>, clauses: &mut Vec<Vec<Tree<T>>>) {
+            match expr {
+                And(left, right) => {
+                    collect_clauses(left, clauses);
+                    collect_clauses(right, clauses);
+                }
+                other => {
+                    let mut clause = Vec::new();
+                    collect_clause(other, &mut clause);
+                    clauses.push(clause);
+                }
+            }
+        }
+
+        let mut clauses = Vec::new();
+        collect_clauses(&self, &mut clauses);
+        let mut clauses = clauses
+            .iter_mut()
+            .map(|clause| {
+                while clause.len() > 1 {
+                    let right = clause.pop().unwrap();
+                    let left = clause.pop().unwrap();
+                    clause.push(Or(rc!(left), rc!(right)));
+                }
+                clause.pop().expect("Empty clause")
+            })
+            .collect::<Vec<Tree<T>>>();
+        while clauses.len() > 1 {
+            let right = clauses.pop().unwrap();
+            let left = clauses.pop().unwrap();
+            clauses.push(And(rc!(left), rc!(right)));
+        }
+        clauses.pop().expect("Empty clauses")
+    }
+
+    fn distribute_or(&self) -> Self {
         use Tree::*;
 
         match self {
-            Value(val) => Value(val.clone().not()),
-            Variable(_) => Not(rc!(self.clone())),
-            Not(sub) => sub.as_ref().clone(),
-            And(left, right) => Or(rc!(left.negate()), rc!(right.negate())),
-            Or(left, right) => And(rc!(left.negate()), rc!(right.negate())),
-            Xor(left, right) => And(
-                rc!(Or(left.clone(), rc!(right.negate()))),
-                rc!(Or(rc!(left.negate()), right.clone())),
-            ),
-            Implication(left, right) => And(left.clone(), rc!(right.negate())),
-            Equivalence(left, right) => And(
-                rc!(Or(rc!(left.negate()), rc!(right.negate()))),
-                rc!(Or(left.clone(), right.clone())),
-            ),
+            Or(left, right) => {
+                let left = left.distribute_or();
+                let right = right.distribute_or();
+
+                match (left, right) {
+                    (And(a1, a2), And(b1, b2)) => And(
+                        rc!(And(
+                            rc!(Or(a1.clone(), b1.clone()).distribute_or()),
+                            rc!(Or(a1, b2.clone()).distribute_or()),
+                        )),
+                        rc!(And(
+                            rc!(Or(a2.clone(), b1).distribute_or()),
+                            rc!(Or(a2, b2).distribute_or()),
+                        )),
+                    ),
+                    (And(a1, a2), c) => And(
+                        rc!(Or(a1, rc!(c.clone())).distribute_or()),
+                        rc!(Or(a2, rc!(c)).distribute_or()),
+                    ),
+                    (a, And(b1, b2)) => And(
+                        rc!(Or(rc!(a.clone()), b1).distribute_or()),
+                        rc!(Or(rc!(a), b2).distribute_or()),
+                    ),
+                    (a, b) => Or(rc!(a), rc!(b)),
+                }
+            }
+            And(left, right) => And(rc!(left.distribute_or()), rc!(right.distribute_or())),
+            other => other.clone(),
         }
     }
 
@@ -166,33 +232,8 @@ impl<T: Evaluable> Tree<T> {
         }
     }
 
-    // TODO
-    pub fn dnf(&self) -> Self {
-        fn dnf<T: Evaluable>(cur: &Tree<T>) -> Tree<T> {
-            use Tree::*;
-
-            match cur {
-                Value(_) | Variable(_) | Not(_) => cur.clone(),
-                And(left, right) => And(rc!(dnf(left)), rc!(dnf(right))).flatten_and(),
-                Or(left, right) => {
-                    let left = dnf(left);
-                    let right = dnf(right);
-                    match (&left, &right) {
-                        (a, And(b, c)) | (And(b, c), a) => dnf(&And(
-                            rc!(Or(rc!(a.clone()), rc!((**b).clone())).flatten_or()),
-                            rc!(Or(rc!(a.clone()), rc!((**c).clone())).flatten_or()),
-                        )),
-                        _ => Or(rc!(left), rc!(right)).flatten_or(),
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-        dnf(&self.nnf())
-    }
-
     pub fn cnf(&self) -> Self {
-        self.negate().dnf().negate()
+        self.nnf().distribute_or().flatten_cnf()
     }
 }
 

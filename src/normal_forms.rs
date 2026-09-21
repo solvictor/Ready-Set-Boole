@@ -1,5 +1,6 @@
 use crate::logic::Tree;
 
+// TODO Remove complexities ?
 /*
    With N = length of formula
    Time complexity: O(N)
@@ -13,7 +14,7 @@ pub fn negation_normal_form(formula: &str) -> String {
         .rpn_formula()
 }
 
-/* TODO Check
+/*
    With N = length of formula
    Time complexity: O(N)
    Space complexity: O(N)
@@ -93,7 +94,7 @@ mod tests {
             ("AB|CD|&", "AB|CD|&"),
             ("ABC||", "ABC||"),
             ("ABC&|", "AB|AC|&"),
-            ("AB&CD&|", "CA|CB|DA|DB|&&&"),
+            ("AB&CD&|", "AC|AD|BC|BD|&&&"),
             ("ABC|&!", "A!B!|A!C!|&"),
         ]
         .iter()
